@@ -139,4 +139,4 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
 # 需要与site.cnf 设置的静态文件路径相同
 STATIC_ROOT = '/var/www/html/static'
 
-LOGIN_REDIRECT_URL = '/account/login/'
+LOGIN_URL = 'test/accounts/login/'
