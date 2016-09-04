@@ -50,7 +50,7 @@
         });
 
         function editFormatter(value) {
-            return '<a class="btn btn-primary btn-xs" href="/accounts/update-user-' + value + '/" title="编辑"><span class="glyphicon glyphicon glyphicon-edit"></span></a>';
+            return '<a class="btn btn-primary btn-xs" href="{% url '_update_user' %}' + value + '/" title="编辑"><span class="glyphicon glyphicon glyphicon-edit"></span></a>';
         }
     </script>
 {% endblock %}

@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'user-list', list_users, name='user_list'),
     url(r'get-users', get_users, name='get_users'),
     url(r'create-users', TemplateView.as_view(template_name="add_users.html"), name='add_users'),
+    url(r'update-user-$', update_user, name='_update_user'),
     url(r'update-user-(?P<pk>\d+)', update_user, name='update_user'),
     url(r'add-user', create_users, name='create_users')
 ]
