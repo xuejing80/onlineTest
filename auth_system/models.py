@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import (
     BaseUserManager, AbstractBaseUser,
-    PermissionsMixin)
+    PermissionsMixin, Group)
 
 
 class MyUserManager(BaseUserManager):
@@ -23,18 +23,20 @@ class MyUserManager(BaseUserManager):
         user.save(using=self.db)
         return user
 
-    def create_superuser(self, email, username, password):
+    def create_superuser(self, email, username, id_num, password):
         """
         Creates and saves a superuser with the given email, date of
         birth and password.
         """
         user = self.create_user(
-            email,
+            email=email,
             password=password,
             username=username,
+            id_num=id_num
         )
         user.is_admin = True
         user.is_superuser = True
+        user.groups.add(Group.objects.get(name="老师"))
         user.save(using=self._db)
         return user
 
@@ -49,7 +51,6 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(max_length=16, verbose_name='昵称（真实姓名）')
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
-
     objects = MyUserManager()
 
     USERNAME_FIELD = 'email'

@@ -138,8 +138,8 @@
             });
         });
         function editFormatter(value) {
-            return '<a href="{% url '_update_public_homework' %}' + value + '/" title="编辑" aria-label="编辑" data-pjax="0"><span class="glyphicon glyphicon glyphicon-edit"></span></a>' +
-                    ' <a href="{% url '_homework_detail' %}' + value + '/" title="查看" aria-label="查看" data-pjax="0"><span class="glyphicon glyphicon-eye-open"></span></a> ';
+            return '<a class="btn btn-primary btn-xs" href="{% url '_update_public_homework' %}' + value + '/" title="编辑" aria-label="编辑" data-pjax="0"><span class="glyphicon glyphicon glyphicon-edit"></span></a>' +
+                    ' <a class="btn btn-success btn-xs" href="{% url '_homework_detail' %}' + value + '/" title="查看" aria-label="查看" data-pjax="0"><span class="glyphicon glyphicon-eye-open"></span></a> ';
         }
     </script>
 

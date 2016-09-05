@@ -1,8 +1,6 @@
 # encoding: utf-8
-import codecs
 import json
 import time
-
 import _thread
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
@@ -103,7 +101,8 @@ def del_homework(request):
 def show_homework(request, pk):
     homework = get_object_or_404(HomeWork, pk=pk)
     context = {'id': homework.id, 'name': homework.name, 'courser': homework.courser.name,
-               'start_time': homework.start_time, 'end_time': homework.end_time}
+               'start_time': homework.start_time, 'end_time': homework.end_time,
+               'title': '公开作业“' + homework.name + '”的详细'}
     return render(request, 'homework_detail.html', context=context)
 
 
@@ -117,7 +116,7 @@ def show_my_homework(request, pk):
     context = {'id': homework.id, 'name': homework.name, 'courser': homework.courser.name,
                'start_time': homework.start_time, 'end_time': homework.end_time, 'banjis': homework.banji.all(),
                "finished_students_number": homework.finished_students.count(),
-               'total_students_number': total_students_number}
+               'total_students_number': total_students_number, 'title': '我的私有作业“' + homework.name + '”的详细'}
     return render(request, 'my_homework_detail.html', context=context)
 
 
@@ -189,15 +188,15 @@ def show_homework_result(request, id):
     if not homework_answer.judged:
         return render(request, 'information.html', context={
             'info': '作业正在批改,请稍后刷新查看或到已完成作业列表中查看'})
-    wrong_id = []
+    wrong_id = homework_answer.wrong_choice_problems.split(',')
     wrong_info = homework_answer.wrong_choice_problems_info.split(',')
     homework = homework_answer.homework
     choice_problems = []
     for info in json.loads(homework.choice_problem_info):
-        if info['id'] in wrong_id:
+        if str(info['id']) in wrong_id:
             choice_problems.append(
                 {'detail': ChoiceProblem.objects.get(pk=info['id']), 'right': False,
-                 'info': wrong_info[wrong_id.index(info['id'])]})
+                 'info': wrong_info[wrong_id.index(str(info['id']))]})
         else:
             choice_problems.append(
                 {'detail': ChoiceProblem.objects.get(pk=info['id']), 'right': True}
@@ -211,7 +210,7 @@ def show_homework_result(request, id):
 def get_choice_score(homework_answer):
     choice_problem_score = 0
     for info in json.loads(homework_answer.homework.choice_problem_info):
-        if info['id'] not in homework_answer.wrong_choice_problems.split(','):
+        if str(info['id']) not in homework_answer.wrong_choice_problems.split(','):
             choice_problem_score += int(info['total_score'])
     return choice_problem_score
 
@@ -274,8 +273,8 @@ def add_banji(request):
                       end_time=request.POST['end_time'],
                       courser=ClassName.objects.get(pk=request.POST['classname']))
         banji.save()
-        return redirect(reverse('index'))
-    return render(request, 'banji_add.html', context={'classnames': ClassName.objects.all()})
+        return redirect(reverse('banji_detail', args=(banji.id,)))
+    return render(request, 'banji_add.html', context={'classnames': ClassName.objects.all(), 'title': "新建班级"})
 
 
 @permission_required('work.add_classname')
@@ -289,7 +288,7 @@ def add_courser(request):
 @permission_required('work.add_banji')
 def list_banji(request):
     classnames = ClassName.objects.all()
-    context = {'classnames': classnames}
+    context = {'classnames': classnames, 'title': '班级列表'}
     return render(request, 'banji_list.html', context=context)
 
 
@@ -355,11 +354,12 @@ def update_banji(request, id):
         banji.end_time = request.POST['end_time']
         banji.courser = ClassName.objects.get(pk=request.POST['classname'])
         banji.save()
-        return redirect(reverse('index'))
+        return redirect(reverse('banji_detail', args=(banji.id,)))
     else:
         return render(request, 'banji_add.html',
                       context={'name': banji.name, 'start_time': banji.start_time, 'end_time': banji.end_time,
-                               'courser_id': banji.courser.pk, 'classnames': ClassName.objects.all()})
+                               'courser_id': banji.courser.pk, 'classnames': ClassName.objects.all(),
+                               'title': '修改班级信息'})
 
 
 # 复制公共作业到私有作业
@@ -389,7 +389,7 @@ def copy_to_my_homework(request):
 @permission_required('work.add_homework')
 def list_my_homework(request):
     classnames = ClassName.objects.all()
-    context = {'classnames': classnames,}
+    context = {'classnames': classnames, 'title': '我的私有作业列表'}
     return render(request, 'my_homework_list.html', context=context)
 
 
@@ -397,13 +397,14 @@ def list_my_homework(request):
 def show_banji(request, pk):
     banji = BanJi.objects.get(pk=pk)
     context = {'id': banji.id, 'name': banji.name, 'courser': banji.courser.name, 'start_time': banji.start_time,
-               'end_time': banji.end_time, 'teacher': banji.teacher.username, 'students': banji.students.all()}
+               'end_time': banji.end_time, 'teacher': banji.teacher.username, 'students': banji.students.all(),
+               'title': '班级"' + banji.name + '"的信息'}
     return render(request, 'banji_detail.html', context=context)
 
 
 @permission_required('work.change_banji')
 def add_students(request, pk):
-    return render(request, 'add_students.html', context={'id': pk})
+    return render(request, 'add_students.html', context={'id': pk, 'title': '添加学生到班级'})
 
 
 @permission_required('work.change_banji')
@@ -445,7 +446,7 @@ def assign_homework(request):
 # 显示我的待做作业
 @login_required()
 def list_do_homework(request):
-    return render(request, 'do_homework_list.html', context={'classnames': ClassName.objects.all()})
+    return render(request, 'do_homework_list.html', context={'classnames': ClassName.objects.all(), 'title': '尚未完成的作业'})
 
 
 # 获取待做作业列表
@@ -505,7 +506,8 @@ def get_problem_score(homework_answer):
 
 @login_required()
 def list_finished_homework(request):
-    return render(request, 'finidshed_homework_list.html', context={'classnames': ClassName.objects.all()})
+    return render(request, 'finidshed_homework_list.html',
+                  context={'classnames': ClassName.objects.all(), 'title': '已经完成的作业'})
 
 
 @login_required()
@@ -652,3 +654,24 @@ def judge_homework(homework_answer):
             homework_answer.judged = True
             homework_answer.save()
             break
+
+
+@permission_required('work.add_myhomework')
+def add_myhomework(request):
+    if request.method == 'POST':
+        print(','.join(request.POST.getlist('languages')))
+        homework = MyHomework(name=request.POST['name'],
+                              choice_problem_ids=request.POST['choice-problem-ids'],
+                              problem_ids=request.POST['problem-ids'],
+                              problem_info=request.POST['problem-info'],
+                              choice_problem_info=request.POST['choice-problem-info'],
+                              courser=ClassName.objects.get(pk=request.POST['classname']),
+                              start_time=request.POST['start_time'],
+                              end_time=request.POST['end_time'],
+                              allowed_languages=','.join(request.POST.getlist('languages')),
+                              total_score=request.POST['total_score'],
+                              creater=request.user)
+        homework.save()
+        return redirect(reverse("my_homework_detail", args=[homework.pk]))
+    classnames = ClassName.objects.all()
+    return render(request, 'homework_add.html', context={'classnames': classnames, 'title': '新建私有作业'})

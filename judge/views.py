@@ -27,7 +27,7 @@ def add_choice(request):
             return redirect(reverse("choice_problem_detail", args=[choice_problem.id]))
     else:
         form = ChoiceAddForm()
-    return render(request, 'choice_problem_add.html', {'form': form})
+    return render(request, 'choice_problem_add.html', {'form': form, 'title': '新建选择题'})
 
 
 # 添加选择题
@@ -46,7 +46,7 @@ def add_problem(request):
             return redirect(reverse("problem_detail", args=[problem.problem_id]))
     else:  # 当正常访问时
         form = ProblemAddForm()
-    return render(request, 'problem_add.html', {'form': form})
+    return render(request, 'problem_add.html', {'form': form, 'title': '新建编程题'})
 
 
 # 删除编程题
@@ -110,6 +110,7 @@ class ProblemDetailView(DetailView):
         for point in self.object.knowledgePoint2.all():
             str += point.upperPoint.classname.name + ' > ' + point.upperPoint.name + ' > ' + point.name + '\n'
         context['knowledge_point'] = str
+        context['title'] = '编程题“' + self.object.title + '”的详细信息'
         return context
 
 
@@ -125,6 +126,7 @@ class ChoiceProblemDetailView(DetailView):
         for point in self.object.knowledgePoint2.all():
             str += point.upperPoint.classname.name + ' > ' + point.upperPoint.name + ' > ' + point.name + '\n'
         context['knowledge_point'] = str
+        context['title'] = '选择题“' + self.object.title + '”的详细信息'
         return context
 
 
@@ -198,14 +200,14 @@ def update_choice_problem(request, id):
 @permission_required('judge.add_problem')
 def list_problems(request):
     classnames = ClassName.objects.all()
-    return render(request, 'problem_list.html', context={'classnames': classnames})
+    return render(request, 'problem_list.html', context={'classnames': classnames, 'title': '编程题题库'})
 
 
 # 选择题列表
 @permission_required('judge.add_choiceproblem')
 def list_choices(request):
     classnames = ClassName.objects.all()
-    return render(request, 'choice_problem_list.html', context={'classnames': classnames})
+    return render(request, 'choice_problem_list.html', context={'classnames': classnames, 'title': '选择题题库'})
 
 
 # 返回含有问题数据的json

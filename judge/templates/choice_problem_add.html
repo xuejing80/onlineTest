@@ -6,6 +6,11 @@
     <script src="//cdn.bootcss.com/jquery-form-validator/2.3.26/jquery.form-validator.min.js"></script>
 {% endblock %}
 {% block content %}
+    <ol class="breadcrumb">
+        <li><a href="{% url 'index' %}">主页</a></li>
+        <li class="active"><a href="{% url 'choice_problem_list' %}"></a>选择题题库管理</li>
+        <li class="active">{{ title }}</li>
+    </ol>
     <div class="panel panel-default">
         <div class="panel-body">
             <form action="" method="post" enctype="multipart/form-data">{% csrf_token %}

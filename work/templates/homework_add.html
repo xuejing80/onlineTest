@@ -72,7 +72,7 @@
                     <label for="start_time">开始时间</label>
                     <div class='input-group date' id='datetimepicker1'>
                         <input type='text' class="form-control" name="start_time" id="start_time"/>
-                    <span class="input-group-addon">
+                        <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
                     </div>
@@ -83,7 +83,7 @@
                     <label for="end_time">结束时间</label>
                     <div class='input-group date' id='datetimepicker2'>
                         <input type='text' class="form-control" name="end_time" id="end_time"/>
-                    <span class="input-group-addon">
+                        <span class="input-group-addon">
                         <span class="glyphicon glyphicon-calendar"></span>
                     </span>
                     </div>
@@ -581,34 +581,37 @@
         });
     </script>
     <script>
-        if (window.location.pathname.indexOf('add-homework')==-1) {
-            $('input[name=languages]').attr("checked", false);
-            setTimeout(function () {
-                        $("#name").val('{{ name }}');
-                        $('#datetimepicker1').data("DateTimePicker").date('{{ start_time }}');
-                        $('#datetimepicker2').data("DateTimePicker").date('{{ end_time }}');
-                        $("#classname option[value='{{ courser_id }}']").attr("selected", true);
-                        data = window.location.pathname.split('-').pop();
-                        $.ajax({
-                            type: "post",
-                            url: "{% url 'get_homework_info' %}",
-                            dataType: "json",
-                            data: {
-                                'homework_id': data.replace("/", ""), 'my': window.location.pathname.indexOf('my') != -1
-                            },
-                            success: function (data) {
-                                $table4.bootstrapTable('append', data.choice_problem_info);
-                                $table2.bootstrapTable('append', data.problem_info);
+        $(function () {
+            if (window.location.pathname.indexOf('add-homework') == -1) {
+                $('input[name=languages]').attr("checked", false);
+                setTimeout(function () {
+                            $("#name").val('{{ name }}');
+                            $('#datetimepicker1').data("DateTimePicker").date('{{ start_time }}');
+                            $('#datetimepicker2').data("DateTimePicker").date('{{ end_time }}');
+                            $("#classname option[value='{{ courser_id }}']").attr("selected", true);
+                            data = window.location.pathname.split('-').pop();
+                            $.ajax({
+                                type: "post",
+                                url: "{% url 'get_homework_info' %}",
+                                dataType: "json",
+                                data: {
+                                    'homework_id': data.replace("/", ""), 'my': window.location.pathname.indexOf('my') != -1
+                                },
+                                success: function (data) {
+                                    $table4.bootstrapTable('append', data.choice_problem_info);
+                                    $table2.bootstrapTable('append', data.problem_info);
+                                }
+                            })
+                            ;
+                            for (var i = 0; i < "{{ languages }}".split(',').length; i++) {
+                                id = "{{ languages }}".split(',')[i];
+                                $("input[name=languages][value=" + id + "]").prop("checked", true)
                             }
-                        })
-                        ;
-                        for (var id in '{{ languages }}'.split(',')) {
-                            $("input[name=languages]").get(id).checked = true
-                        }
-                    }, 0
-            );
+                        }, 0
+                );
 
-        }
+            }
+        });
     </script>
     <script>
         $table4.bind('DOMNodeInserted', function () {

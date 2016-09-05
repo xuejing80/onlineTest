@@ -158,9 +158,9 @@
             5: 'Bash',
             6: 'Python'
         };
-        var allowed_languages = '{{ homework.allowed_languages }}';
-        for (var p in allowed_languages.split(',')) {
-            $(".language").append("<option value=\"" + p + "\">" + languages[p] + "</option>");
+        var allowed_languages = '{{ homework.allowed_languages }}'.split(',');
+        for (var i = 0 ; i < allowed_languages.length ; i++) {
+            $(".language").append("<option value=\"" + allowed_languages[i] + "\">" + languages[allowed_languages[i]] + "</option>");
         }
         function check() {
             $.confirm({

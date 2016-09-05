@@ -15,6 +15,9 @@
     <h4>请到公共作业处复制作业至此，此处作业与公共作业完全独立，您可以编辑而不影响公共作业的内容</h4>
     <div class="btn-group">
         <button type="button" id="remove" class="btn btn-danger"><i class="glyphicon glyphicon-remove">删除选中</i></button>
+
+        <a class="btn btn-primary btn-l" href="{% url 'add_myhomework' %}" role="button"><i
+                class="glyphicon glyphicon-plus">新建私有作业</i></a>
     </div>
     <div id="toolbar">
         <div class="form-inline" role="form">
@@ -27,7 +30,6 @@
                 </select>
             </div>
             <button id="ok" type="submit" class="btn btn-default">筛选</button>
-
         </div>
     </div>
     <table id="table"
@@ -259,9 +261,9 @@
         })
         ;
         function editFormatter(value) {
-            return '<a href="{% url '_update_my_homework' %}' + value + '/" title="编辑" aria-label="编辑" data-pjax="0"><span class="glyphicon glyphicon glyphicon-edit"></span></a>'
-                    + ' <a href="{% url '_my_homework_detail' %}' + value + '/" title="查看" aria-label="查看" data-pjax="0"><span class="glyphicon glyphicon-eye-open"></span></a> ' +
-                    ' <a title="布置到我的班级"  onclick="assignHomework(' + value + ');return false" aria-label="布置到我的班级" data-pjax="0"><span class="glyphicon glyphicon-plus-sign"></span></a>';
+            return '<a class="btn btn-primary btn-xs" href="{% url '_update_my_homework'  %}' + value + '/" title="编辑" aria-label="编辑" data-pjax="0"><span class="glyphicon glyphicon glyphicon-edit"></span></a>'
+                    + ' <a class="btn btn-success btn-xs" href="{% url '_my_homework_detail'  %}' + value + '/" title="查看" aria-label="查看" data-pjax="0"><span class="glyphicon glyphicon-eye-open"></span></a>' +
+                    ' <a class="btn btn-info btn-xs" title="布置到我的班级"  onclick="assignHomework(' + value + ');return false" aria-label="布置到我的班级" data-pjax="0"><span class="glyphicon glyphicon-plus-sign"></span></a>';
         }
     </script>
 
