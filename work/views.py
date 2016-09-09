@@ -225,13 +225,12 @@ def do_homework(request, homework_id):
         homework = MyHomework.objects.get(pk=homework_id)
         if request.user in homework.finished_students.all():
             return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
+        for id in homework.choice_problem_ids.split(','):
+            if request.POST.get('selection-' + id,'x') != ChoiceProblem.objects.get(pk=id).right_answer and id:
+                wrong_ids += id + ','
+                wrong_info += request.POST.get('selection-' + id,'未回答') + ','
         for k, v in request.POST.items():
-            if k.startswith('selection'):
-                if v != ChoiceProblem.objects.get(pk=k[10:]).right_answer:
-                    wrong_ids += k[10:] + ','
-                    wrong_info += v + ','
-            elif k.startswith('source'):
-
+            if k.startswith('source'):
                 solution = Solution(problem_id=k[7:], user_id=request.user.username,
                                     language=request.POST['language-' + k[7:]], ip=request.META['REMOTE_ADDR'],
                                     code_length=len(v))
@@ -675,3 +674,5 @@ def add_myhomework(request):
         return redirect(reverse("my_homework_detail", args=[homework.pk]))
     classnames = ClassName.objects.all()
     return render(request, 'homework_add.html', context={'classnames': classnames, 'title': '新建私有作业'})
+
+

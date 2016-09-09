@@ -143,8 +143,8 @@ def update_problem(request, id):
                'memory_limit': problem.memory_limit,
                'input': problem.input,
                'output': problem.output,
-               'sample_input': problem.sample_input,
-               'sample_output': problem.sample_output,
+               'sample_input1': problem.sample_input,
+               'sample_output1': problem.sample_output,
                'sample_input2': problem.sample_input2,
                'sample_output2': problem.sample_output2,
                'classname': 0,
@@ -155,17 +155,14 @@ def update_problem(request, id):
         if form.is_valid():
             form.save(user=request.user, problemid=id)
             try:  # 对文件进行解压和保存
-                f = request.FILES['file_upload']
-                store_dir = '/home/judge/data/' + str(problem.problem_id)
+                old_path = '/tmp/' + request.POST['random_name'] + '/' + request.POST['file_name'] + '_files/'
+                store_dir = '/home/judge/data/' + str(id)
                 if os.path.exists(store_dir):
                     shutil.rmtree(store_dir)
-                os.makedirs(store_dir)
-                with open(store_dir + '/file.zip', 'wb+') as destination:
-                    for chunk in f.chunks():
-                        destination.write(chunk)
-                os.chdir(store_dir)
-                shutil.unpack_archive('file.zip')
-                os.remove('file.zip')
+                shutil.move(old_path, '/home/judge/data/')
+                os.rename('/home/judge/data/' + request.POST['file_name'] + '_files',
+                          '/home/judge/data/' + str(id))
+                shutil.rmtree('/tmp/' + request.POST['random_name'])
             except Exception as  e:
                 print(e)
                 pass
@@ -261,15 +258,16 @@ def get_json(request, model_name):
 def get_testCases(problem):
     cases = []
     filename = '/home/judge/data/' + str(problem.problem_id) + "/scores.txt"
-    data = open(filename).read()
-    if data[:3] == codecs.BOM_UTF8:  # 去除bom
-        data = data[3:]
-    lines = data.splitlines()
-    for line in lines:
-        if line:
-            desc, score = line.split()[:2]
-            case = {'desc': desc, 'score': int(score)}
-            cases.append(case)
+    with open(filename, 'r',encoding='utf-8') as f:
+        data  = f.read()
+        if data[:3] == codecs.BOM_UTF8:  # 去除bom
+            data = data[3:]
+        lines = data.splitlines()
+        for line in lines:
+            if line:
+                desc, score = line.split()[:2]
+                case = {'desc': desc, 'score': int(score)}
+                cases.append(case)
     return cases
 
 
@@ -296,14 +294,15 @@ def verify_file(request):
     un_zip(filename)
     try:
         score_filename = filename + '_files/' "scores.txt"
-        data = open(score_filename).read()
-        if data[:3] == codecs.BOM_UTF8:  # 去除bom
-            data = data[3:]
-        lines = data.splitlines()
-        for line in lines:
-            if line:
-                desc, score = line.split()[:2]
-            count += 1
+        with open(score_filename, 'r',encoding='utf-8') as f:
+            data = f.read()
+            if data[:3] == codecs.BOM_UTF8:  # 去除bom
+                data = data[3:]
+            lines = data.splitlines()
+            for line in lines:
+                if line:
+                    desc, score = line.split()[:2]
+                count += 1
     except:
         shutil.rmtree(tempdir)
         return HttpResponse(json.dumps({'result': 0, 'info': 'scores.txt文件不符合规范，请注意文件最后不要多余空行'}))
