@@ -2376,9 +2376,9 @@ label {
     color: #2A3542;
 }
 
-.site-min-height {
-    min-height: 900px;
-}
+/*.site-min-height {*/
+    /*min-height: 900px;*/
+/*}*/
 
 #menu-right {
     float: right;
@@ -2394,4 +2394,5 @@ label {
 
 .jumbotron {
     background: #ffffff;
+    padding: 0;
 }
