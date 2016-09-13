@@ -496,7 +496,7 @@ def get_problem_score(homework_answer):
     for info in json.loads(homework.problem_info):
         solution = solutions.get(problem_id=info['id'])
         for case in info['testcases']:
-            if solution.oi_info == '{(null)}':
+            if solution.oi_info == '{(null)}' or not solution.oi_info:
                 break
             if json.loads(solution.oi_info)[case['desc'] + '.in']['result'] == 4:
                 score += int(case['score'])
@@ -641,7 +641,7 @@ def add_kp2(request):
 def judge_homework(homework_answer):
     while True:
         for solution in homework_answer.solution_set.all():
-            if not solution.oi_info:
+            if not solution.oi_info  and solution.result == 0:
                 time.sleep(1)
                 break
         else:
