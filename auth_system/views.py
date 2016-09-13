@@ -92,13 +92,13 @@ class UserControl(View):
             current_site = get_current_site(request)
             site_name = current_site.name
             domain = current_site.domain
-            title = u"欢迎注册 %s ！" % site_name
-            message = u"你好！ %s ,感谢注册 %s ！\n\n" % (username, site_name) + \
+            title = u"欢迎注册计算机语言作业平台！"
+            message = u"你好！ %s ,感谢注册计算机语言作业破那个太 ！\n\n" % (username) + \
                       u"请牢记以下信息：\n" + \
                       u"用户名：%s \n" % id_num + \
                       u"昵称：%s" % username + "\n" + \
                       u"邮箱：%s" % email + "\n" + \
-                      u"网站：http://%s" % domain + "\n\n"
+                      u"网站：http://%s" % domain + "/test\n\n"
             from_email = 'fornjupt@163.com'
             try:
                 send_mail(title, message, from_email, [email])

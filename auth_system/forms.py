@@ -56,13 +56,13 @@ class VmaigUserCreationForm(forms.ModelForm):
         # Since User.username is unique, this check is redundant,
         # but it sets a nicer error message than the ORM. See #13147.
         username = self.cleaned_data["username"]
-        try:
-            MyUser._default_manager.get(username=username)
-        except MyUser.DoesNotExist:
-            return username
-        raise forms.ValidationError(
-            self.error_messages["duplicate_username"]
-        )
+        # try:
+        #     MyUser._default_manager.get(username=username)
+        # except MyUser.DoesNotExist:
+        return username
+        # raise forms.ValidationError(
+        #     self.error_messages["duplicate_username"]
+        # )
 
     def clean_password2(self):
         password1 = self.cleaned_data.get("password1")
@@ -104,8 +104,7 @@ class VmaigUserCreationForm(forms.ModelForm):
     def save(self, commit=True):
         user = super(VmaigUserCreationForm, self).save(commit=False)
         user.set_password(self.cleaned_data["password1"])
-        if self.cleaned_data['id_num']:
-            user.id_num = self.cleaned_data['id_num']
+        user.id_num = self.cleaned_data['id_num']
         if commit:
             user.save()
             user.groups.add(Group.objects.get(name='学生'))
@@ -145,13 +144,13 @@ class VmaigPasswordRestForm(forms.Form):
         token = token_generator.make_token(self.user)
         protocol = 'http'
         uid = uid.decode("utf-8")
-        title = "重置 %s 的密码" % site_name
+        title = "重置计算机语言作业平台的密码"
         message = "你收到这封信是因为你请求重置你在 网站 %s 上的账户密码\n\n" % site_name + \
                   "请访问该页面并输入新密码:\n\n" + \
                   protocol + '://' + domain + '/' + '' + 'account/' + 'resetpassword' + '/' + uid + '/' + token + '/' + '  \n\n' + \
                   "你的用户名，如果已经忘记的话:  %s\n\n" % self.user.username + \
-                  "感谢使用我们的站点!\n\n" + \
-                  "%s 团队\n\n\n" % site_name
+                  "感谢使用!\n\n" + \
+                  "南京邮电大学 计算机学院 软件教学中心\n\n\n"
 
         try:
             send_mail(title, message, from_email, [self.user.email])
