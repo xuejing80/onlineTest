@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import os
+
 import random
-import shutil
+import re
+
 import string
 import zipfile
+
 from django.apps import apps
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
@@ -15,6 +17,8 @@ from judge.forms import ProblemAddForm, ChoiceAddForm
 from .models import KnowledgePoint1, ClassName, ChoiceProblem, Problem
 from django.views.generic.detail import DetailView
 import codecs
+import os
+import shutil
 
 
 # 添加编程题
@@ -257,16 +261,39 @@ def get_json(request, model_name):
 # 获取指定题目的分值信息
 def get_testCases(problem):
     cases = []
+    r3 = re.compile('\d+ \d+ #.+#')
+    r2 = re.compile('^\d+ \d+$')
+    r22 = re.compile('^\d+ #.+#$')
+    r1 = re.compile('^\d$')
     filename = '/home/judge/data/' + str(problem.problem_id) + "/scores.txt"
-    with open(filename, 'r',encoding='utf-8') as f:
-        data  = f.read()
+    with open(filename, 'rb') as f:
+        data = f.read().decode('utf-8')
         if data[:3] == codecs.BOM_UTF8:  # 去除bom
             data = data[3:]
         lines = data.splitlines()
+        i = 0
         for line in lines:
             if line:
-                desc, score = line.split()[:2]
-                case = {'desc': desc, 'score': int(score)}
+                if r3.match(line):
+                    score = int(line.split(maxsplit=2)[1])
+                    desc = line.split(maxsplit=2)[0]
+                    info = line.split(maxsplit=2)[2]
+                    case = {'desc': desc, 'score': int(score), 'info': info}
+                elif r2.match(line):
+                    score = int(line.split(maxsplit=1)[1])
+                    desc = line.split(maxsplit=1)[0]
+                    case = {'desc': desc, 'score': int(score), 'info': '没有提示信息'}
+                elif r22.match(line):
+                    desc = i
+                    score = line.split(maxsplit=1)[0]
+                    info = line.split(maxsplit=1)[1]
+                    case = {'desc': i, 'score': int(score), 'info': info}
+                elif r1.match(line):
+                    score = int(line.split(maxsplit=1)[0])
+                    case = {'desc': i, 'score': int(score), 'info': '没有提示信息'}
+                else:
+                    case = {'desc': i, 'score': 0 ,'info':'出错了,请联系题目作者调试题目'}
+                i += 1
                 cases.append(case)
     return cases
 
@@ -274,17 +301,15 @@ def get_testCases(problem):
 def get_totalScore(test_cases):
     total_score = 0
     for score in test_cases:
-        total_score += score['score']
+        total_score += int(score['score'])
     return total_score
 
 
 @permission_required('judge.add_problem')
 def verify_file(request):
     file = request.FILES['file_upload']
-    count = 0
-    in_count = 0
-    out_count = 0
-    random_name = ''.join(random.sample(string.digits + string.ascii_letters * 10, 8))
+    count = in_count = out_count = 0
+    random_name = ''.join(random.sample(string.digits + string.ascii_letters * 10, 8))  # 生成随机字符串作为文件名保存文件，防止相同文件名冲突
     tempdir = os.path.join('/tmp', random_name)
     os.mkdir(tempdir)
     filename = os.path.join(tempdir, file.name)
@@ -292,20 +317,30 @@ def verify_file(request):
         for chunk in file.chunks():
             destination.write(chunk)
     un_zip(filename)
+
+    r3  = re.compile('\d+ \d+ #.+#')
+    r2 = re.compile('^\d+ \d+$')
+    r22 = re.compile('^\d+ #.+#$')
+    r1 = re.compile('^\d$')
+
     try:
-        score_filename = filename + '_files/' "scores.txt"
-        with open(score_filename, 'r',encoding='utf-8') as f:
-            data = f.read()
-            if data[:3] == codecs.BOM_UTF8:  # 去除bom
-                data = data[3:]
+        score_filename = filename + '_files/' + "scores.txt"
+        for root, dirs, files in os.walk(filename + '_files/'):  # 去除文件BOM头
+            for f in files:
+                remove_bom(filename + '_files/' + f)
+        with open(score_filename, 'rb') as f:
+            data = f.read().decode('utf-8')
             lines = data.splitlines()
             for line in lines:
                 if line:
-                    desc, score = line.split()[:2]
+                    if not (r3.match(line) or r2.match(line) or r22.match(line) or r1.match(line)):
+                        shutil.rmtree(tempdir)
+                        return HttpResponse(
+                            json.dumps({'result': 0, 'info': 'scores.txt文件不符合规范，请注意对应测试用例名称，分值，描述之间以空格分割'}))
                 count += 1
-    except:
+    except Exception as e:
         shutil.rmtree(tempdir)
-        return HttpResponse(json.dumps({'result': 0, 'info': 'scores.txt文件不符合规范，请注意文件最后不要多余空行'}))
+        return HttpResponse(json.dumps({'result': 0, 'info': 'scores.txt文件不符合规范，请注意文件最后不要多余空行' + e.__str__()}))
     for parentdir, dirname, filenames in os.walk(filename + '_files/'):
         for filename in filenames:
             if os.path.splitext(filename)[1] == '.in':
@@ -327,3 +362,39 @@ def un_zip(file_name):
     for names in zip_file.namelist():
         zip_file.extract(names, file_name + "_files/")
     zip_file.close()
+
+
+"""
+Remove BOM(Byte Order Marker) from utf-8 files.
+"""
+import os, sys, argparse, codecs
+
+BUFSIZE = 4096
+BOMLEN = len(codecs.BOM_UTF8)
+
+
+def init_options():
+    parser = argparse.ArgumentParser(description='Remove BOM(Byte Order Marker) from utf-8 files.')
+    parser.add_argument('path', type=str, help='path of the target folder')
+    parser.add_argument('--type', dest='type', help='file type')
+    return parser.parse_args()
+
+
+def remove_bom(filepath):
+    with open(filepath, 'r+b') as fp:
+        chunk = fp.read(BUFSIZE)
+        if chunk.startswith(codecs.BOM_UTF8):
+            i = 0
+            chunk = chunk[BOMLEN:]
+            while chunk:
+                fp.seek(i)
+                fp.write(chunk)
+                i += len(chunk)
+                fp.seek(BOMLEN, os.SEEK_CUR)
+                chunk = fp.read(BUFSIZE)
+            fp.seek(-BOMLEN, os.SEEK_CUR)
+            fp.truncate()
+            print('Converted: ' + filepath)
+        else:
+            print(filepath + " file_encoding is utf8 without BOM.")
+
