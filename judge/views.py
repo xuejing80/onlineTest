@@ -261,9 +261,9 @@ def get_json(request, model_name):
 # 获取指定题目的分值信息
 def get_testCases(problem):
     cases = []
-    r3 = re.compile('\d+ \d+ #.+#')
+    r3 = re.compile('\d+ \d+ #.*#')
     r2 = re.compile('^\d+ \d+$')
-    r22 = re.compile('^\d+ #.+#$')
+    r22 = re.compile('^\d+ #.*#$')
     r1 = re.compile('^\d$')
     filename = '/home/judge/data/' + str(problem.problem_id) + "/scores.txt"
     with open(filename, 'rb') as f:
@@ -284,7 +284,6 @@ def get_testCases(problem):
                     desc = line.split(maxsplit=1)[0]
                     case = {'desc': desc, 'score': int(score), 'info': '没有提示信息'}
                 elif r22.match(line):
-                    desc = i
                     score = line.split(maxsplit=1)[0]
                     info = line.split(maxsplit=1)[1]
                     case = {'desc': i, 'score': int(score), 'info': info}
@@ -292,7 +291,7 @@ def get_testCases(problem):
                     score = int(line.split(maxsplit=1)[0])
                     case = {'desc': i, 'score': int(score), 'info': '没有提示信息'}
                 else:
-                    case = {'desc': i, 'score': 0 ,'info':'出错了,请联系题目作者调试题目'}
+                    case = {'desc': i, 'score': 0, 'info': '出错了,请联系题目作者调试题目'}
                 i += 1
                 cases.append(case)
     return cases
@@ -318,9 +317,9 @@ def verify_file(request):
             destination.write(chunk)
     un_zip(filename)
 
-    r3  = re.compile('\d+ \d+ #.+#')
+    r3 = re.compile('\d+ \d+ #.*#')
     r2 = re.compile('^\d+ \d+$')
-    r22 = re.compile('^\d+ #.+#$')
+    r22 = re.compile('^\d+ #.*#$')
     r1 = re.compile('^\d$')
 
     try:
@@ -340,7 +339,8 @@ def verify_file(request):
                 count += 1
     except Exception as e:
         shutil.rmtree(tempdir)
-        return HttpResponse(json.dumps({'result': 0, 'info': 'scores.txt文件不符合规范，请注意文件最后不要多余空行' + e.__str__()}))
+        return HttpResponse(
+            json.dumps({'result': 0, 'info': 'scores.txt文件不符合规范，请注意文件最后不要多余空行，并且文件均为UTF8编码' + e.__str__()}))
     for parentdir, dirname, filenames in os.walk(filename + '_files/'):
         for filename in filenames:
             if os.path.splitext(filename)[1] == '.in':
@@ -397,4 +397,3 @@ def remove_bom(filepath):
             print('Converted: ' + filepath)
         else:
             print(filepath + " file_encoding is utf8 without BOM.")
-
