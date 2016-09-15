@@ -34,9 +34,10 @@
 
                                         <li>压缩格式只支持zip</li>
                                         <li>压缩包内文件不要有目录结构，所有文件放在最上层</li>
-                                        <li>压缩包内文件名区分大小写，文件名中不允许出现中文</li>
+                                        <li>压缩包内文件名 <span style="color: red">区分大小写，文件名中不允许出现中文</span></li>
                                         <li>输入文件名为 [case_name].in 输出文件名为 [case_name].out 分数文件名为 scores.txt</li>
-                                        <li>所有文件都必须为Unix格式(UTF-8)文本</li>
+                                        <li>所有文件都必须为Unix格式<span style="color: red"><strong>(UTF-8)</strong></span>文本
+                                        </li>
                                         <li>分数文件中每行格式为[case_name] [score] #[要点提示]#，空格分开，其中[case_name]如果省略，则默认使用0, 1,
                                             2依次递增；[要点提示]不超过40个中文字符，简要描述测试要点，如果省略，则为无提示
                                         </li>

@@ -87,27 +87,27 @@
                         <div class="panel-body">
                             <div class="section">
                                 <h4><span class="label label-primary">题目描述</span></h4>
-                                <div id="description"><p>  {{ problem.description }}</p></div>
+                                <div id="description"><p>{{ problem.description }}</p></div>
                             </div>
                             <div class="section">
                                 <h4><span class="label label-primary">输入</span></h4>
-                                <div id="input"><p>  {{ problem.input }}</p></div>
+                                <div id="input"><p>{{ problem.input }}</p></div>
                             </div>
                             <div class="section">
                                 <h4><span class="label label-primary">输出</span></h4>
-                                <div id="output"><p>  {{ problem.output }}</p></div>
+                                <div id="output"><p>{{ problem.output }}</p></div>
                             </div>
                             {% if problem.sample_output %}
                                 <div class="section">
                                     <h4><span class="label label-info">样例输入1:</span></h4>
                                     <div id="sample_input">
-                                        <pre>  {{ problem.sample_input }}</pre>
+                                        <pre>{{ problem.sample_input }}</pre>
                                     </div>
                                 </div>
                                 <div class="section">
                                     <h4><span class="label label-info">样例输出1:</span></h4>
                                     <div id="sample_output">
-                                        <pre>  {{ problem.sample_output }}</pre>
+                                        <pre>{{ problem.sample_output }}</pre>
                                     </div>
                                 </div>
                             {% endif %}
@@ -115,13 +115,13 @@
                                 <div class="section">
                                     <h4><span class="label label-primary">样例输入2:</span></h4>
                                     <div id="sample_input2">
-                                        <pre> {{ problem.sample_input2 }}</pre>
+                                        <pre>{{ problem.sample_input2 }}</pre>
                                     </div>
                                 </div>
                                 <div class="section">
                                     <h4><span class="label label-primary">样例输出2:</span></h4>
                                     <div id="sample_output2">
-                                        <pre>  {{ problem.sample_output2 }}</pre>
+                                        <pre>{{ problem.sample_output2 }}</pre>
                                     </div>
                                 </div>
                             {% endif %}
@@ -140,6 +140,8 @@
                                           id="source{{ problem.problem_id }}" spellcheck="false"></textarea>
                                 </div>
                             </div>
+                        <div id="result-{{ problem.problem_id }}"></div>
+                        <button class="btn btn-success" id="button-{{ problem.problem_id }}" onclick="test_run({{ problem.problem_id }});return false;"><span class="glyphicon glyphicon-play"></span>测试运行</button>
                         </div>
                     </div>
                 </div>
@@ -175,5 +177,49 @@
                 }
             });
         }
+        $.ajaxSetup({
+            data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
+        });
+        function test_run(id) {
+            var result_div = $("#result-" + id);
+            result_div.html('<div class="alert alert-default" role="alert"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>正在判断程序运行情况</div>')
+            $.ajax({
+                    type: "post",
+                    url: "{% url 'test_run' %}",
+                    dataType: "json",
+                    data: {'type':'upload','problem_id': id ,'code':$('#source' + id).val(),'language':$('#language-' + id).val(),'homework_id':{{ homework.id }}},
+                    success: function (data) {
+                        if (data.result==1){
+                             var int  = setInterval(function() {
+                    $.ajax({
+                                type: "post",
+                                url: "{% url 'test_run' %}",
+                                dataType: "json",
+                                data: {'type':'score','solution_id':data.solution_id,'problem_id':id},
+                                success: function (data) {
+                                    if (data.status==1){
+                                        switch (data.result){
+                                            case 0:
+                                                result_div.html('<div class="alert alert-danger" role="alert"><pre>'+data.info+'</pre></div>')
+                                                break;
+                                            case 1:
+                                                result_div.html('<div class="alert alert-warning" role="alert">'+'总共'+data.info.total_cases+'个测试点，你通过了其中的'+data.info.right_num+'个' +'</div>')
+                                                break;
+                                            case 2:
+                                                result_div.html('<div class="alert alert-success" role="alert">恭喜你通过了所有的测试点</div>')
+                                        }
+                                        int=window.clearInterval(int)
+                                    }else(
+                                            result_div.html('<div class="alert alert-default" role="alert"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>正在判断程序运行情况</div>')
+                                    )
+                                }
+                            })
+                },
+                            1000);
+                        }}
+                    });
+            return false;
+                }
+
     </script>
 {% endblock %}

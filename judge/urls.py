@@ -1,6 +1,7 @@
 from django.conf.urls import url, include
 from .views import  select_point, delete_problem, add_problem, ProblemDetailView, update_problem, \
-    add_choice, list_problems,list_choices,del_choice_problem,ChoiceProblemDetailView,update_choice_problem, verify_file
+    add_choice, list_problems,list_choices,del_choice_problem,ChoiceProblemDetailView,update_choice_problem, verify_file, \
+    test_run
 
 urlpatterns = [
     url(r'problem_list/$', list_problems, name='problemlist'),

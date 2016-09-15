@@ -9,7 +9,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.datastructures import MultiValueDictKeyError
 from auth_system.models import MyUser
 from judge.models import ClassName, Problem, ChoiceProblem, Solution, SourceCode, SourceCodeUser, KnowledgePoint1, \
-    KnowledgePoint2
+    KnowledgePoint2, Compileinfo
+from judge.views import get_testCases
 from work.models import HomeWork, HomeworkAnswer, BanJi, MyHomework
 from django.contrib.auth.decorators import permission_required, login_required
 
@@ -493,13 +494,16 @@ def get_problem_score(homework_answer):
     score = 0
     homework = homework_answer.homework
     solutions = homework_answer.solution_set
-    for info in json.loads(homework.problem_info):
-        solution = solutions.get(problem_id=info['id'])
-        for case in info['testcases']:
-            if solution.oi_info == '{(null)}' or not solution.oi_info:
-                break
-            if json.loads(solution.oi_info)[case['desc'] + '.in']['result'] == 4:
-                score += int(case['score'])
+    try:
+        for info in json.loads(homework.problem_info):
+            solution = solutions.get(problem_id=info['id'])
+            for case in info['testcases']:
+                if solution.oi_info == '{(null)}' or not solution.oi_info:
+                    break
+                if json.loads(solution.oi_info)[str(case['desc']) + '.in']['result'] == 4:
+                    score += int(case['score'])
+    except Exception:
+        pass
     return score
 
 
@@ -566,7 +570,8 @@ def get_finished_students(request):
     if request.GET['order'] == 'desc':
         sort = '-' + sort
     for homework_answer in homework_answers.all().order_by(sort)[offset:offset + limit]:
-        recode = {'name': homework_answer.creator.username,
+        recode = {'id_num': homework_answer.creator.id_num,
+                  'name': homework_answer.creator.username,
                   'create_time': homework_answer.create_time.strftime('%Y-%m-%d %H:%M:%S'), 'id': homework_answer.id,
                   'teacher': 'dd',
                   'score': '%d/%d' % (homework_answer.score, homework_answer.homework.total_score)
@@ -641,7 +646,7 @@ def add_kp2(request):
 def judge_homework(homework_answer):
     while True:
         for solution in homework_answer.solution_set.all():
-            if not solution.oi_info  and solution.result == 0:
+            if not solution.oi_info and solution.result == 0:
                 time.sleep(1)
                 break
         else:
@@ -674,3 +679,40 @@ def add_myhomework(request):
         return redirect(reverse("my_homework_detail", args=[homework.pk]))
     classnames = ClassName.objects.all()
     return render(request, 'homework_add.html', context={'classnames': classnames, 'title': '新建私有作业'})
+
+
+def test_run(request):
+    if request.POST['type'] == 'upload':
+        try:
+            solution = Solution(problem_id=request.POST['problem_id'], user_id=request.user.username,
+                                 language=request.POST['language'], ip=request.META['REMOTE_ADDR'],
+                                code_length=len(request.POST['code']))
+            solution.save()
+            source_code = SourceCode(solution_id=solution.solution_id, source=request.POST['code'])
+            source_code.save()
+            source_code_user = SourceCodeUser(solution_id=solution.solution_id, source=request.POST['code'])
+            source_code_user.save()
+            return HttpResponse(json.dumps({'result':1 ,'solution_id':solution.solution_id}))
+        except Exception as e:
+            return HttpResponse(json.dumps({'result': 0, 'info': '出现了问题' + e.__str__()}))
+    if request.POST['type'] == 'score':
+        solution = Solution.objects.get(solution_id=request.POST['solution_id'])
+
+        if not solution.oi_info and solution.result == 0:
+            return  HttpResponse(json.dumps({'status': 0,'info':'题目正在编译中'}))
+        if solution.oi_info == '{(null)}' or not solution.oi_info:
+            return HttpResponse(json.dumps({'status': 1 ,'result': 0, 'info': '编译出错:\n'+Compileinfo.objects.get(solution_id=solution.solution_id).error}))
+        else:
+            result = 2
+            right_num = wrong_num = 0
+            problem = Problem.objects.get(pk=request.POST['problem_id'])
+            cases = get_testCases(problem)
+            for case in cases:
+                if json.loads(solution.oi_info)[str(case['desc']) + '.in']['result'] == 4:
+                    right_num += 1
+                else:
+                    wrong_num += 1
+                    result = 1
+            return HttpResponse(json.dumps({'status':1,'result': result,
+                                            'info': {'total_cases': len(cases), 'right_num': right_num,
+                                                     'wrong_num': wrong_num}}))

@@ -14,7 +14,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.http import HttpResponse
 import json
 from judge.forms import ProblemAddForm, ChoiceAddForm
-from .models import KnowledgePoint1, ClassName, ChoiceProblem, Problem
+from .models import KnowledgePoint1, ClassName, ChoiceProblem, Problem, Solution, SourceCode, SourceCodeUser
 from django.views.generic.detail import DetailView
 import codecs
 import os
@@ -266,34 +266,40 @@ def get_testCases(problem):
     r22 = re.compile('^\d+ #.*#$')
     r1 = re.compile('^\d$')
     filename = '/home/judge/data/' + str(problem.problem_id) + "/scores.txt"
-    with open(filename, 'rb') as f:
-        data = f.read().decode('utf-8')
-        if data[:3] == codecs.BOM_UTF8:  # 去除bom
-            data = data[3:]
-        lines = data.splitlines()
-        i = 0
-        for line in lines:
-            if line:
-                if r3.match(line):
-                    score = int(line.split(maxsplit=2)[1])
-                    desc = line.split(maxsplit=2)[0]
-                    info = line.split(maxsplit=2)[2]
-                    case = {'desc': desc, 'score': int(score), 'info': info}
-                elif r2.match(line):
-                    score = int(line.split(maxsplit=1)[1])
-                    desc = line.split(maxsplit=1)[0]
-                    case = {'desc': desc, 'score': int(score), 'info': '没有提示信息'}
-                elif r22.match(line):
-                    score = line.split(maxsplit=1)[0]
-                    info = line.split(maxsplit=1)[1]
-                    case = {'desc': i, 'score': int(score), 'info': info}
-                elif r1.match(line):
-                    score = int(line.split(maxsplit=1)[0])
-                    case = {'desc': i, 'score': int(score), 'info': '没有提示信息'}
-                else:
-                    case = {'desc': i, 'score': 0, 'info': '出错了,请联系题目作者调试题目'}
-                i += 1
-                cases.append(case)
+    try:
+        with open(filename, 'rb') as f:
+            data = f.read().decode('utf-8')
+            if data[:3] == codecs.BOM_UTF8:  # 去除bom
+                data = data[3:]
+            lines = data.splitlines()
+            i = 0
+            for line in lines:
+                if line:
+                    try:
+                        if r3.match(line):
+                            score = int(line.split(maxsplit=2)[1])
+                            desc = line.split(maxsplit=2)[0]
+                            info = line.split(maxsplit=2)[2]
+                            case = {'desc': desc, 'score': int(score), 'info': info}
+                        elif r2.match(line):
+                            score = int(line.split(maxsplit=1)[1])
+                            desc = line.split(maxsplit=1)[0]
+                            case = {'desc': desc, 'score': int(score), 'info': '没有提示信息'}
+                        elif r22.match(line):
+                            score = line.split(maxsplit=1)[0]
+                            info = line.split(maxsplit=1)[1]
+                            case = {'desc': i, 'score': int(score), 'info': info}
+                        elif r1.match(line):
+                            score = int(line.split(maxsplit=1)[0])
+                            case = {'desc': i, 'score': int(score), 'info': '没有提示信息'}
+                        else:
+                            case = {'desc': i, 'score': 0, 'info': '出错了,请联系题目作者调试题目'}
+                    except:
+                        case = {'desc': i, 'score': 0, 'info': '题目有错'}
+                    i += 1
+                    cases.append(case)
+    except:
+        cases = []
     return cases
 
 

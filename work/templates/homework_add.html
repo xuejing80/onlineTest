@@ -99,6 +99,7 @@
     </form>
 
     <p>
+    <p>
     <h3>已选选择题（共<span id="choice_count">0</span>题，共<span id="choice_score">0</span>分）（拖动进行排序）</h3>
     <div class="btn-group">
         <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalTable2">
@@ -360,17 +361,20 @@
                 score = $.map(row.testcases, function (item) {
                     return item.score
                 });
-                desc = $.map(row.testcases, function (item) {
+                infos = $.map(row.testcases, function (item) {
                     return item.info
+                });
+                descs = $.map(row.testcases, function (item) {
+                    return item.desc
                 });
                 var html = '<form class="form-horizontal">';
                 for (var i = 1; i <= score.length; i++) {
                     html += '<div class="panel panel-default">' +
                             '<div class="panel-body">' +
                             '<div class="form-group">' +
-                            '<label class="col-sm-2 control-label">测试点' + i + '</label>' +
+                            '<label class="col-sm-2 control-label">测试点' + '<span class="desc">'+descs[i-1]+'</span>' + '</label>' +
                             '<div class="col-sm-6">' +
-                            '<input type="text" class="form-control" id="desc" value="' + desc[i - 1] + '"></div></div>' +
+                            '<input type="text" class="form-control" id="info" value="' + infos[i - 1] + '"></div></div>' +
                             '<div class="form-group"><label class="col-sm-2 control-label">分值</label><div class="col-sm-2"><input type="text" class="form-control" id="score" value="' + score[i - 1] + '"></div></div></div></div>';
                 }
                 html += "</form>";
@@ -566,10 +570,11 @@
             var testcases = [];
             var totalscore = 0;
             $("#modal_tc").find(".panel").each(function () {
-                var desc = $(this).find("#desc").val();
+                var desc = $(this).find("#desc").html();
+                var info = $(this).find("#info").val();
                 var score = $(this).find("#score").val();
                 totalscore += parseInt(score);
-                testcases.push({'desc': desc, 'score': score})
+                testcases.push({'info': info, 'score': score,'desc':desc })
             });
             var row = $table2.bootstrapTable('getRowByUniqueId', id);
             row.total_score = totalscore;
