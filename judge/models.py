@@ -146,6 +146,9 @@ class SourceCode(models.Model):
     class Meta:
         db_table = 'source_code'
 
+    def __str__(self):
+        return str(self.solution_id)
+
 
 class SourceCodeUser(models.Model):
     solution_id = models.IntegerField(primary_key=True)

@@ -1,24 +1,22 @@
 # -*- coding: utf-8 -*-
 
+import json
 import random
 import re
-
+import shutil
 import string
 import zipfile
 
 from django.apps import apps
 from django.contrib.auth.decorators import permission_required
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.datastructures import MultiValueDictKeyError
-from django.http import HttpResponse
-import json
-from judge.forms import ProblemAddForm, ChoiceAddForm
-from .models import KnowledgePoint1, ClassName, ChoiceProblem, Problem, Solution, SourceCode, SourceCodeUser
 from django.views.generic.detail import DetailView
-import codecs
-import os
-import shutil
+
+from judge.forms import ProblemAddForm, ChoiceAddForm
+from .models import KnowledgePoint1, ClassName, ChoiceProblem, Problem
 
 
 # 添加编程题
@@ -373,7 +371,7 @@ def un_zip(file_name):
 """
 Remove BOM(Byte Order Marker) from utf-8 files.
 """
-import os, sys, argparse, codecs
+import os, argparse, codecs
 
 BUFSIZE = 4096
 BOMLEN = len(codecs.BOM_UTF8)

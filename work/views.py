@@ -5,6 +5,8 @@ import _thread
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.datastructures import MultiValueDictKeyError
 from auth_system.models import MyUser
@@ -18,7 +20,6 @@ from django.contrib.auth.decorators import permission_required, login_required
 @permission_required('work.add_homework')
 def add_homework(request):
     if request.method == 'POST':
-        print(','.join(request.POST.getlist('languages')))
         homework = HomeWork(name=request.POST['name'],
                             choice_problem_ids=request.POST['choice-problem-ids'],
                             problem_ids=request.POST['problem-ids'],
@@ -39,29 +40,30 @@ def add_homework(request):
 # 获取作业列表数据
 @permission_required('work.change_homework')
 def get_json_work(request):
+    kwargs = {}
     json_data = {}
     recodes = []
     offset = int(request.GET['offset'])
     limit = int(request.GET['limit'])
-    classname = request.GET['classname']
     if request.GET['my'] == 'true':
-        homeworks = MyHomework.objects.filter(creater=request.user).all()
-    else:
-        homeworks = HomeWork.objects.all()
-    if classname != '0':
-        homeworks = homeworks.filter(courser__id=classname)
+        kwargs['creater'] = request.user
+    if request.GET['classname'] != '0':
+        kwargs['courser__id'] = request.GET['classname']
     try:
-        homeworks = homeworks.filter(name__icontains=request.GET['search'])
+        kwargs['name__icontains'] = request.GET['search']
     except:
         pass
+
+    homework_list = HomeWork.objects.filter(**kwargs)
     try:
         sort = request.GET['sort']
-    except MultiValueDictKeyError:
-        sort = 'pk'
-    json_data['total'] = homeworks.count()
-    if request.GET['order'] == 'desc':
-        sort = '-' + sort
-    for homework in homeworks.all().order_by(sort)[offset:offset + limit]:
+        if request.GET['order'] == 'desc':
+            sort = '-' + sort
+        homework_list = homework_list.order_by(sort)
+    except:
+        pass
+    json_data['total'] = homework_list.count()
+    for homework in homework_list.all()[offset:offset + limit]:
         recode = {'name': homework.name, 'pk': homework.pk,
                   'courser': homework.courser.name, 'id': homework.pk,
                   'start_time': homework.start_time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -138,6 +140,7 @@ def ajax_for_homework_info(request):
 def update_public_homework(request, pk):
     homework = get_object_or_404(HomeWork, pk=pk)
     if request.method == 'POST':
+        homework.update()
         homework.name = request.POST['name']
         homework.choice_problem_ids = request.POST['choice-problem-ids']
         homework.problem_ids = request.POST['problem-ids']
@@ -183,7 +186,7 @@ def update_my_homework(request, pk):
 @login_required()
 def show_homework_result(request, id):
     homework_answer = HomeworkAnswer.objects.get(pk=id)
-    if request.user != homework_answer.creator:
+    if request.user != homework_answer.creator and not request.user.is_superuser:
         return render(request, 'warning.html', context={
             'info': '您无权查看其他同学的作业结果'})
     if not homework_answer.judged:
@@ -297,22 +300,18 @@ def list_banji(request):
 def get_banji_list(request):
     json_data = {}
     recodes = []
+    kwargs = {}
     offset = int(request.GET['offset'])
     limit = int(request.GET['limit'])
     classname = request.GET['classname']
-    if request.GET['my'] == 'true':
-        objects = BanJi.objects.filter(teacher=request.user)
-    else:
-        objects = BanJi.objects
+    if request.GET['my'] == 'true' and not request.user.is_superuser:
+        kwargs['teacher'] = request.user
     if classname != '0':
-        banjis = objects.filter(courser__id=classname)
-    else:
-        banjis = objects
-    try:
-        banjis = banjis.filter(name__icontains=request.GET['search'])
-    except:
-        pass
-    try:
+        kwargs['courser__id'] = classname
+    if 'search' in request.GET:
+        kwargs['name__icontains'] = request.GET['search']
+    banjis = BanJi.objects.filter(**kwargs)  # 合并多次筛选以提高数据库效率
+    try:  # 对数据按照指定方式排序
         sort = request.GET['sort']
     except MultiValueDictKeyError:
         sort = 'pk'
@@ -326,7 +325,7 @@ def get_banji_list(request):
                   'end_time': banji.end_time.strftime('%Y-%m-%d %H:%M:%S')}
         recodes.append(recode)
     json_data['rows'] = recodes
-    return HttpResponse(json.dumps(json_data))
+    return JsonResponse(json_data)
 
 
 # 删除班级
@@ -494,6 +493,7 @@ def get_problem_score(homework_answer):
     score = 0
     homework = homework_answer.homework
     solutions = homework_answer.solution_set
+    problem_info = []
     try:
         for info in json.loads(homework.problem_info):
             solution = solutions.get(problem_id=info['id'])
@@ -583,6 +583,9 @@ def get_finished_students(request):
 
 @permission_required('work.add_classname')
 def list_coursers(request):
+    """
+    列出课程
+    """
     coursers = ClassName.objects.all()
     return render(request, 'courser_list.html', {'coursers': coursers, 'title': '课程列表'})
 
@@ -685,23 +688,25 @@ def test_run(request):
     if request.POST['type'] == 'upload':
         try:
             solution = Solution(problem_id=request.POST['problem_id'], user_id=request.user.username,
-                                 language=request.POST['language'], ip=request.META['REMOTE_ADDR'],
+                                language=request.POST['language'], ip=request.META['REMOTE_ADDR'],
                                 code_length=len(request.POST['code']))
             solution.save()
             source_code = SourceCode(solution_id=solution.solution_id, source=request.POST['code'])
             source_code.save()
             source_code_user = SourceCodeUser(solution_id=solution.solution_id, source=request.POST['code'])
             source_code_user.save()
-            return HttpResponse(json.dumps({'result':1 ,'solution_id':solution.solution_id}))
+            return HttpResponse(json.dumps({'result': 1, 'solution_id': solution.solution_id}))
         except Exception as e:
             return HttpResponse(json.dumps({'result': 0, 'info': '出现了问题' + e.__str__()}))
     if request.POST['type'] == 'score':
         solution = Solution.objects.get(solution_id=request.POST['solution_id'])
 
         if not solution.oi_info and solution.result == 0:
-            return  HttpResponse(json.dumps({'status': 0,'info':'题目正在编译中'}))
+            return HttpResponse(json.dumps({'status': 0, 'info': '题目正在编译中'}))
         if solution.oi_info == '{(null)}' or not solution.oi_info:
-            return HttpResponse(json.dumps({'status': 1 ,'result': 0, 'info': '编译出错:\n'+Compileinfo.objects.get(solution_id=solution.solution_id).error}))
+            solution.delete()
+            return HttpResponse(json.dumps({'status': 1, 'result': 0, 'info': '编译出错:\n' + Compileinfo.objects.get(
+                solution_id=solution.solution_id).error}))
         else:
             result = 2
             right_num = wrong_num = 0
@@ -713,6 +718,25 @@ def test_run(request):
                 else:
                     wrong_num += 1
                     result = 1
-            return HttpResponse(json.dumps({'status':1,'result': result,
+            solution.delete()
+            return HttpResponse(json.dumps({'status': 1, 'result': result,
                                             'info': {'total_cases': len(cases), 'right_num': right_num,
                                                      'wrong_num': wrong_num}}))
+
+
+@login_required()
+def delete_homeworkanswer(request, id):
+    homeworkanswer = HomeworkAnswer.objects.get(pk=id)
+    homwork_id = homeworkanswer.homework_id
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'you are not admin'})
+    homeworkanswer.homework.finished_students.remove(request.user)
+    for solution in homeworkanswer.solution_set.all():
+        SourceCode.objects.get(solution_id=solution.solution_id).delete()
+        SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
+        solution.delete()
+    homeworkanswer.delete()
+    return redirect(reverse('my_homework_detail', kwargs={'pk': homwork_id}))
+
+#
+# def temp_save_homework(request):

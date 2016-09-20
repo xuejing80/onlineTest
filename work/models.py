@@ -66,3 +66,7 @@ class HomeworkAnswer(models.Model):
     choice_problem_review_info = models.CharField(max_length=500)
     create_time = models.DateTimeField(auto_now_add=True)
     judged = models.BooleanField(default=False)
+
+
+    def __str__(self):
+        return self.id

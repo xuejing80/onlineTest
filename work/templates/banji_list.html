@@ -64,7 +64,7 @@
             $('#toolbar').find('select[name]').each(function () {
                 params[$(this).attr('name')] = $(this).val();
             });
-            params['my'] = false
+            params['my'] = true;
             return params;
         }
         $ok = $('#ok');

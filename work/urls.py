@@ -5,9 +5,11 @@ from work.views import add_homework, get_json_work, list_homework, del_homework,
     copy_to_my_homework, list_my_homework, update_public_homework, update_my_homework, show_my_homework, show_banji, \
     add_students, ajax_add_students, assign_homework, list_do_homework, get_my_homework_todo, show_homework_result, \
     list_finished_homework, get_finished_homework, get_finished_students, list_coursers, list_kp1s, list_kp2s, \
-    delete_courser, add_kp1, add_kp2, delete_kp1, delete_kp2, add_myhomework, test_run
+    delete_courser, add_kp1, add_kp2, delete_kp1, delete_kp2, add_myhomework, test_run, delete_homeworkanswer
 
 urlpatterns = [
+    url(r'del-homeworkanswer-(?P<id>\d+)', delete_homeworkanswer, name='delete_homeworkanswer'),
+    url(r'del-homeworkanswer-', delete_homeworkanswer, name='_delete_homeworkanswer'),
     url(r'add-homework$', add_homework, name='add_homework'),
     url(r'get-json-work', get_json_work, name='get_json_data'),
     url(r'^homework-list', list_homework, name='homework_list'),
@@ -55,5 +57,5 @@ urlpatterns = [
     url(r'delete-kp1', delete_kp1, name='delete_kp1'),
     url(r'delete-kp2', delete_kp2, name='delete_kp2'),
     url(r'add-myhomework', add_myhomework, name='add_myhomework'),
-    url(r'test_run', test_run, name='test_run')
+    url(r'test_run', test_run, name='test_run'),
 ]

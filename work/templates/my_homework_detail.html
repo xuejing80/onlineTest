@@ -104,7 +104,7 @@
         });
 
         function editFormatter(value) {
-            return '<a href="/work/homework-result-' + value + '/" title="查看详细"><span class="glyphicon glyphicon-eye-open"></span></a>';
-        }
+            return '<a class="btn btn-success btn-xs" href="{% url '_show_homework_result' %}' + value + '/" title="查看详细"><span class="glyphicon glyphicon-eye-open"></span></a>'+
+                    ' <a class="btn btn-danger btn-xs" href="{% url '_delete_homeworkanswer' %}' + value + '/" title="删除这个记录并重做作业"><span class="glyphicon glyphicon-repeat"></span></a>';}
     </script>
 {% endblock %}

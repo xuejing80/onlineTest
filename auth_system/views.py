@@ -93,7 +93,7 @@ class UserControl(View):
             site_name = current_site.name
             domain = current_site.domain
             title = u"欢迎注册计算机语言作业平台！"
-            message = u"你好！ %s ,感谢注册计算机语言作业破那个太 ！\n\n" % (username) + \
+            message = u"你好！ %s ,感谢注册计算机语言作业平台 ！\n\n" % (username) + \
                       u"请牢记以下信息：\n" + \
                       u"用户名：%s \n" % id_num + \
                       u"昵称：%s" % username + "\n" + \

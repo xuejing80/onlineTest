@@ -1,4 +1,6 @@
 from django import forms
+from django.db import transaction
+
 from judge.models import Problem, ClassName, KnowledgePoint2, ChoiceProblem
 
 
@@ -106,21 +108,22 @@ class ChoiceAddForm(forms.Form):
         cd = self.cleaned_data
         keypoint = cd['keypoint'].split(',')
         if id:
-            choiceProblem = ChoiceProblem.objects.get(pk=id)
-            choiceProblem.title = cd['title']
-            choiceProblem.a = cd['a']
-            choiceProblem.b = cd['b']
-            choiceProblem.c = cd['c']
-            choiceProblem.c = cd['d']
-            choiceProblem.right_answer = cd['selection']
-            choiceProblem.creater = user
-            choiceProblem.classname.clear()
-            choiceProblem.knowledgePoint1.clear()
-            choiceProblem.knowledgePoint1.clear()
+            with transaction.atomic():
+                choiceProblem = ChoiceProblem.objects.select_for_update().get(pk=id)
+                choiceProblem.c = cd['c']
+                choiceProblem.title = cd['title']
+                choiceProblem.a = cd['a']
+                choiceProblem.b = cd['b']
+                choiceProblem.d = cd['d']
+                choiceProblem.right_answer = cd['selection']
+                choiceProblem.creater = user
+                choiceProblem.classname.clear()
+                choiceProblem.knowledgePoint1.clear()
+                choiceProblem.save()
         else:
             choiceProblem = ChoiceProblem(title=cd['title'], a=cd['a'], b=cd['b'], c=cd['c'], d=cd['d'],
                                           right_answer=cd['selection'], creater=user)
-        choiceProblem.save()
+            choiceProblem.save()
         for point in keypoint:
             choiceProblem.knowledgePoint2.add(KnowledgePoint2.objects.get(pk=point))
         for point in choiceProblem.knowledgePoint2.all():
