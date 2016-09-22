@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'aq=%ruqv*-LOCAL-TEST-f9@+-k012gbqri'
+SECRET_KEY = 'GG'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -115,7 +115,7 @@ LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Shanghai'
 
 # If you set this to False, Django will not use timezone-aware datetimes.
-USE_TZ = True
+USE_TZ = False
 
 USE_I18N = True
 
@@ -125,7 +125,7 @@ USE_L10N = True
 EMAIL_HOST = 'smtp.163.com'  # SMTP地址
 EMAIL_PORT = 25  # SMTP端口
 EMAIL_HOST_USER = 'fornjupt@163.com'  # 我自己的邮箱
-EMAIL_HOST_PASSWORD = 'njupt12345'  # 我的邮箱密码
+EMAIL_HOST_PASSWORD = ' - - '  # 我的邮箱密码
 EMAIL_SUBJECT_PREFIX = '计算机语言作业平台'  # 为邮件Subject-line前缀,默认是'[django]'
 EMAIL_USE_TLS = True  # 与SMTP服务器通信时，是否启动TLS链接(安全链接)。默认是false
 
@@ -139,4 +139,4 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, "static"), ]
 # 需要与site.cnf 设置的静态文件路径相同
 STATIC_ROOT = '/var/www/html/static'
 
-LOGIN_URL = 'test/accounts/login/'
+LOGIN_URL = '/test/accounts/login/'

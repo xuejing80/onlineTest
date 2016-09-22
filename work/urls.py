@@ -23,7 +23,6 @@ urlpatterns = [
     url(r'banji-detail-$', show_banji, name='_banji_detail'),
     url(r'add-students-to-mybanji-$', add_students, name='_add_students'),
     url(r'homework-result-$', show_homework_result, name='_show_homework_result'),
-
     url(r'^homework-detail-(?P<pk>\d+)/$', show_homework, name='homework_detail'),
     url(r'update-public-homework-(?P<pk>\d+)', update_public_homework, name='update_public_homework'),
     url(r'update-my-homework-(?P<pk>\d+)', update_my_homework, name='update_my_homework'),

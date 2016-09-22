@@ -56,9 +56,9 @@ class MyHomework(models.Model):
 
 class HomeworkAnswer(models.Model):
     id = models.AutoField(primary_key=True)
-    homework = models.ForeignKey(MyHomework, null=True)
-    creator = models.ForeignKey(MyUser, null=True)
-    wrong_choice_problems = models.CharField(max_length=200, null=True)
+    homework = models.ForeignKey(MyHomework, null=True, verbose_name='作业')
+    creator = models.ForeignKey(MyUser, null=True, verbose_name='答题者')
+    wrong_choice_problems = models.CharField(max_length=200, null=True)  #
     wrong_choice_problems_info = models.CharField(max_length=200, null=True)
     score = models.IntegerField(null=True)
     choice_problem_score = models.IntegerField(null=True)
@@ -66,7 +66,6 @@ class HomeworkAnswer(models.Model):
     choice_problem_review_info = models.CharField(max_length=500)
     create_time = models.DateTimeField(auto_now_add=True)
     judged = models.BooleanField(default=False)
-
 
     def __str__(self):
         return self.id

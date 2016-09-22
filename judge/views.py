@@ -258,6 +258,11 @@ def get_json(request, model_name):
 
 # 获取指定题目的分值信息
 def get_testCases(problem):
+    """
+    获取一道编程题的测试点信息
+    :param problem: 带获取信息的题目
+    :return: 以列表形式返回题目所有的测试点
+    """
     cases = []
     r3 = re.compile('\d+ \d+ #.*#')
     r2 = re.compile('^\d+ \d+$')
@@ -302,6 +307,11 @@ def get_testCases(problem):
 
 
 def get_totalScore(test_cases):
+    """
+    根据测试点信息，求得题目的总分
+    :param test_cases: 测试点信息列表
+    :return: 总分
+    """
     total_score = 0
     for score in test_cases:
         total_score += int(score['score'])
@@ -310,6 +320,11 @@ def get_totalScore(test_cases):
 
 @permission_required('judge.add_problem')
 def verify_file(request):
+    """
+    验证上传的文件是否符合规范
+    :param request: 上传文件请求
+    :return: 以json格式返回文件验证信息
+    """
     file = request.FILES['file_upload']
     count = in_count = out_count = 0
     random_name = ''.join(random.sample(string.digits + string.ascii_letters * 10, 8))  # 生成随机字符串作为文件名保存文件，防止相同文件名冲突
@@ -361,6 +376,11 @@ def verify_file(request):
 
 
 def un_zip(file_name):
+    """
+    解压zip文件到当前目录，并生成"file_name_files"文件夹保存解压的数据
+    :param file_name: 文件名
+    :return: 无
+    """
     zip_file = zipfile.ZipFile(file_name)
     os.mkdir(file_name + "_files")
     for names in zip_file.namelist():
@@ -385,6 +405,11 @@ def init_options():
 
 
 def remove_bom(filepath):
+    """
+    移除记事本保存UTF8编码文件的BOM头
+    :param filepath: 文件路径
+    :return: 无
+    """
     with open(filepath, 'r+b') as fp:
         chunk = fp.read(BUFSIZE)
         if chunk.startswith(codecs.BOM_UTF8):

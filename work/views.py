@@ -5,7 +5,6 @@ import _thread
 from django.contrib.auth.models import Group
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.http import HttpResponseRedirect
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.datastructures import MultiValueDictKeyError
@@ -40,30 +39,29 @@ def add_homework(request):
 # 获取作业列表数据
 @permission_required('work.change_homework')
 def get_json_work(request):
-    kwargs = {}
     json_data = {}
     recodes = []
     offset = int(request.GET['offset'])
     limit = int(request.GET['limit'])
+    classname = request.GET['classname']
     if request.GET['my'] == 'true':
-        kwargs['creater'] = request.user
-    if request.GET['classname'] != '0':
-        kwargs['courser__id'] = request.GET['classname']
+        homeworks = MyHomework.objects.filter(creater=request.user).all()
+    else:
+        homeworks = HomeWork.objects.all()
+    if classname != '0':
+        homeworks = homeworks.filter(courser__id=classname)
     try:
-        kwargs['name__icontains'] = request.GET['search']
+        homeworks = homeworks.filter(name__icontains=request.GET['search'])
     except:
         pass
-
-    homework_list = HomeWork.objects.filter(**kwargs)
     try:
         sort = request.GET['sort']
-        if request.GET['order'] == 'desc':
-            sort = '-' + sort
-        homework_list = homework_list.order_by(sort)
-    except:
-        pass
-    json_data['total'] = homework_list.count()
-    for homework in homework_list.all()[offset:offset + limit]:
+    except MultiValueDictKeyError:
+        sort = 'pk'
+    json_data['total'] = homeworks.count()
+    if request.GET['order'] == 'desc':
+        sort = '-' + sort
+    for homework in homeworks.all().order_by(sort)[offset:offset + limit]:
         recode = {'name': homework.name, 'pk': homework.pk,
                   'courser': homework.courser.name, 'id': homework.pk,
                   'start_time': homework.start_time.strftime('%Y-%m-%d %H:%M:%S'),
@@ -140,7 +138,6 @@ def ajax_for_homework_info(request):
 def update_public_homework(request, pk):
     homework = get_object_or_404(HomeWork, pk=pk)
     if request.method == 'POST':
-        homework.update()
         homework.name = request.POST['name']
         homework.choice_problem_ids = request.POST['choice-problem-ids']
         homework.problem_ids = request.POST['problem-ids']
@@ -186,7 +183,7 @@ def update_my_homework(request, pk):
 @login_required()
 def show_homework_result(request, id):
     homework_answer = HomeworkAnswer.objects.get(pk=id)
-    if request.user != homework_answer.creator and not request.user.is_superuser:
+    if request.user != homework_answer.creator and homework_answer.homework.creater != request.user:
         return render(request, 'warning.html', context={
             'info': '您无权查看其他同学的作业结果'})
     if not homework_answer.judged:
@@ -196,6 +193,7 @@ def show_homework_result(request, id):
     wrong_info = homework_answer.wrong_choice_problems_info.split(',')
     homework = homework_answer.homework
     choice_problems = []
+    problems = []
     for info in json.loads(homework.choice_problem_info):
         if str(info['id']) in wrong_id:
             choice_problems.append(
@@ -205,10 +203,13 @@ def show_homework_result(request, id):
             choice_problems.append(
                 {'detail': ChoiceProblem.objects.get(pk=info['id']), 'right': True}
             )
+    for solution in homework_answer.solution_set.all():
+        problems.append({'code': SourceCode.objects.get(solution_id=solution.solution_id).source,
+                         'title': Problem.objects.get(pk=solution.problem_id).title, 'result': solution.result})
     return render(request, 'homework_result.html',
                   context={'choice_problems': choice_problems, 'problem_score': homework_answer.problem_score,
                            'choice_problem_score': homework_answer.choice_problem_score,
-                           'score': homework_answer.score})
+                           'score': homework_answer.score, 'problems': problems})
 
 
 def get_choice_score(homework_answer):
@@ -222,17 +223,27 @@ def get_choice_score(homework_answer):
 # 显示作业并处理作业答案
 @login_required()
 def do_homework(request, homework_id):
-    if request.method == 'POST':
+    """
+    做题
+    :param request: 请求
+    :param homework_id:作业的id
+    :return: 重定向
+    """
+    if request.method == 'POST':  # 当提交作业时
         wrong_ids, wrong_info = '', ''
         homeworkAnswer = HomeworkAnswer()
         homeworkAnswer.save()
         homework = MyHomework.objects.get(pk=homework_id)
         if request.user in homework.finished_students.all():
             return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
+
+        # 判断选择题，保存错误选择题到目录
         for id in homework.choice_problem_ids.split(','):
             if id and request.POST.get('selection-' + id, 'x') != ChoiceProblem.objects.get(pk=id).right_answer:
-                wrong_ids += id + ','
-                wrong_info += request.POST.get('selection-' + id, '未回答') + ','
+                wrong_ids += id + ','  # 保存错误题目id
+                wrong_info += request.POST.get('selection-' + id, '未回答') + ','  # 保存其回答记录
+
+        # 创建编程题的solution，等待oj后台轮询判题
         for k, v in request.POST.items():
             if k.startswith('source'):
                 solution = Solution(problem_id=k[7:], user_id=request.user.username,
@@ -250,6 +261,8 @@ def do_homework(request, homework_id):
         homeworkAnswer.homework = homework
         homeworkAnswer.save()
         homework.finished_students.add(request.user)
+
+        # 开启判题进程，保存编程题目分数
         _thread.start_new_thread(judge_homework, (homeworkAnswer,))
         return redirect(reverse('show_homework_result', args=[homeworkAnswer.id]))
     else:
@@ -364,25 +377,22 @@ def update_banji(request, id):
 # 复制公共作业到私有作业
 @permission_required('work.add_myhomework')
 def copy_to_my_homework(request):
-    if request.method == 'POST':
-        ids = request.POST.getlist('ids[]')
-        try:
-            for pk in ids:
-                old_homework = HomeWork.objects.get(pk=pk)
-                homework = MyHomework(name=old_homework.name, courser=old_homework.courser, creater=request.user,
-                                      start_time=old_homework.start_time, end_time=old_homework.end_time,
-                                      problem_ids=old_homework.problem_ids,
-                                      choice_problem_ids=old_homework.choice_problem_ids,
-                                      problem_info=old_homework.problem_info,
-                                      choice_problem_info=old_homework.choice_problem_info,
-                                      allowed_languages=old_homework.allowed_languages,
-                                      total_score=old_homework.total_score)
-                homework.save()
-        except:
-            return HttpResponse(0)
-        return HttpResponse(1)
-    else:
+    ids = request.POST.getlist('ids[]')
+    try:
+        for pk in ids:
+            old_homework = HomeWork.objects.get(pk=pk)
+            homework = MyHomework(name=old_homework.name, courser=old_homework.courser, creater=request.user,
+                                  start_time=old_homework.start_time, end_time=old_homework.end_time,
+                                  problem_ids=old_homework.problem_ids,
+                                  choice_problem_ids=old_homework.choice_problem_ids,
+                                  problem_info=old_homework.problem_info,
+                                  choice_problem_info=old_homework.choice_problem_info,
+                                  allowed_languages=old_homework.allowed_languages,
+                                  total_score=old_homework.total_score)  # todo 有更好的方法
+            homework.save()
+    except:
         return HttpResponse(0)
+    return HttpResponse(1)
 
 
 @permission_required('work.add_homework')
@@ -487,23 +497,26 @@ def get_my_homework_todo(request):
     return HttpResponse(json.dumps(json_data))
 
 
-# 获取作业的编程题分数
-
 def get_problem_score(homework_answer):
+    """
+    获取某次作业的分数
+    :param homework_answer: 已提交的作业
+    :return: 作业的编程题部分分数
+    """
     score = 0
     homework = homework_answer.homework
     solutions = homework_answer.solution_set
     problem_info = []
-    try:
-        for info in json.loads(homework.problem_info):
-            solution = solutions.get(problem_id=info['id'])
-            for case in info['testcases']:
-                if solution.oi_info == '{(null)}' or not solution.oi_info:
+    for info in json.loads(homework.problem_info):
+        try:
+            solution = solutions.get(problem_id=info['id'])  # 获取题目
+            for case in info['testcases']:  # 获取题目的测试分数
+                if solution.result == 11:  # 如果题目出现编译错误，直接判断为0分，不再继续判断
                     break
-                if json.loads(solution.oi_info)[str(case['desc']) + '.in']['result'] == 4:
+                if json.loads(solution.oi_info)[str(case['desc']) + '.in']['result'] == 4:  # 参照测试点，依次加测试点分数
                     score += int(case['score'])
-    except Exception:
-        pass
+        except Exception:
+            print("获取成绩出错！solution_id: %d" % solution.solution_id)
     return score
 
 
@@ -571,7 +584,7 @@ def get_finished_students(request):
         sort = '-' + sort
     for homework_answer in homework_answers.all().order_by(sort)[offset:offset + limit]:
         recode = {'id_num': homework_answer.creator.id_num,
-                  'name': homework_answer.creator.username,
+                  'username': homework_answer.creator.username,
                   'create_time': homework_answer.create_time.strftime('%Y-%m-%d %H:%M:%S'), 'id': homework_answer.id,
                   'teacher': 'dd',
                   'score': '%d/%d' % (homework_answer.score, homework_answer.homework.total_score)
@@ -645,26 +658,38 @@ def add_kp2(request):
     return HttpResponse(1)
 
 
-# 判断作业成绩并保存
 def judge_homework(homework_answer):
+    # todo 效率很低，有待改进
+    """
+    评判作业，修改作业的成绩信息
+    :param homework_answer:提交的作业
+    :return:None
+    """
     while True:
-        for solution in homework_answer.solution_set.all():
-            if not solution.oi_info and solution.result == 0:
-                time.sleep(1)
+        for solution in homework_answer.solution_set.all():  # 遍历作业的solution集合
+            if solution.result in [0, 1, 2, 3]:  # 当存在solution还在判断中时，重新进行遍历
+                time.sleep(0.1)
                 break
-        else:
-            choice_problem_score = get_choice_score(homework_answer)
+            else:
+                continue
+        else:  # 如果全部solution都已判断结束
+            choice_problem_score = get_choice_score(homework_answer)  # 获取选择题分数
             homework_answer.choice_problem_score = choice_problem_score
-            problem_score = get_problem_score(homework_answer)
+            problem_score = get_problem_score(homework_answer)  # 获取编程题分数
             homework_answer.problem_score = problem_score
-            homework_answer.score = choice_problem_score + problem_score
-            homework_answer.judged = True
-            homework_answer.save()
-            break
+            homework_answer.score = choice_problem_score + problem_score  # 计算总分
+            homework_answer.judged = True  # 修改判题标记为已经判过
+            homework_answer.save()  # 保存
+            break  # 跳出循环
 
 
 @permission_required('work.add_myhomework')
 def add_myhomework(request):
+    """
+    新建私有作业
+    :param request:请求
+    :return: 如果为GET请求，返回新建作业页面，如果为POST，返回到新建的题目的
+    """
     if request.method == 'POST':
         print(','.join(request.POST.getlist('languages')))
         homework = MyHomework(name=request.POST['name'],
@@ -685,58 +710,76 @@ def add_myhomework(request):
 
 
 def test_run(request):
-    if request.POST['type'] == 'upload':
+    """
+    提交作业前提供的测试运行函数
+    :param request: 请求
+    :return: 包含运行结果的json数据
+    """
+    if request.POST['type'] == 'upload':  # 当上传代码时
         try:
             solution = Solution(problem_id=request.POST['problem_id'], user_id=request.user.username,
                                 language=request.POST['language'], ip=request.META['REMOTE_ADDR'],
-                                code_length=len(request.POST['code']))
+                                code_length=len(request.POST['code']))  # 创建判题的solutioon
             solution.save()
             source_code = SourceCode(solution_id=solution.solution_id, source=request.POST['code'])
-            source_code.save()
             source_code_user = SourceCodeUser(solution_id=solution.solution_id, source=request.POST['code'])
+            source_code.save()
             source_code_user.save()
-            return HttpResponse(json.dumps({'result': 1, 'solution_id': solution.solution_id}))
+            return HttpResponse(json.dumps({'result': 1, 'solution_id': solution.solution_id}))  # 创建成功，返回solutioon_id
         except Exception as e:
-            return HttpResponse(json.dumps({'result': 0, 'info': '出现了问题' + e.__str__()}))
-    if request.POST['type'] == 'score':
-        solution = Solution.objects.get(solution_id=request.POST['solution_id'])
+            return HttpResponse(json.dumps({'result': 0, 'info': '出现了问题' + e.__str__()}))  # 创建失败，返回错误信息
+    if request.POST['type'] == 'score':  # 当获取结果时
 
-        if not solution.oi_info and solution.result == 0:
-            return HttpResponse(json.dumps({'status': 0, 'info': '题目正在编译中'}))
-        if solution.oi_info == '{(null)}' or not solution.oi_info:
+        solution = Solution.objects.get(solution_id=request.POST['solution_id'])  # 获取solution
+
+        if solution.result in [0, 1, 2, 3]:  # 当题目还在判断中时
+            return HttpResponse(json.dumps({'status': 0, 'info': '题目正在判断中'}))
+        if solution.result == 11:  # 当出现编译错误时
+            SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
+            SourceCode.objects.get(solution_id=solution.solution_id).delete()
             solution.delete()
-            return HttpResponse(json.dumps({'status': 1, 'result': 0, 'info': '编译出错:\n' + Compileinfo.objects.get(
-                solution_id=solution.solution_id).error}))
-        else:
-            result = 2
-            right_num = wrong_num = 0
+            try:
+                compile_info = Compileinfo.objects.get(
+                    solution_id=request.POST['solution_id']).error
+            except:
+                compile_info = ''
+            return JsonResponse(
+                {'status': 1, 'result': 0, 'info': '编译出错:\n' + compile_info})
+        else:  # 当成功编译时
+            result = 2  # 2代表通过全部测试用例
+            right_num = wrong_num = 0  # 通过的测试点数量和未通过的测试点数量
             problem = Problem.objects.get(pk=request.POST['problem_id'])
             cases = get_testCases(problem)
             for case in cases:
-                if json.loads(solution.oi_info)[str(case['desc']) + '.in']['result'] == 4:
+                if json.loads(solution.oi_info)[str(case['desc']) + '.in']['result'] == 4:  # 通过测试点的情况
                     right_num += 1
                 else:
                     wrong_num += 1
-                    result = 1
+                    result = 1  # 1代表有测试用例未通过
+            SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
+            SourceCode.objects.get(solution_id=solution.solution_id).delete()
             solution.delete()
-            return HttpResponse(json.dumps({'status': 1, 'result': result,
-                                            'info': {'total_cases': len(cases), 'right_num': right_num,
-                                                     'wrong_num': wrong_num}}))
+            return JsonResponse({'status': 1, 'result': result,
+                                 'info': {'total_cases': len(cases), 'right_num': right_num,
+                                          'wrong_num': wrong_num}})
 
 
 @login_required()
 def delete_homeworkanswer(request, id):
+    """
+    去除指定人的作业完成状态
+    :param request: 请求
+    :param id: 作业回答id
+    :return: 重定向到作业详细界面
+    """
     homeworkanswer = HomeworkAnswer.objects.get(pk=id)
     homwork_id = homeworkanswer.homework_id
-    if not request.user.is_superuser:
+    if homeworkanswer.homework.creater != request.user:
         return JsonResponse({'error': 'you are not admin'})
-    homeworkanswer.homework.finished_students.remove(request.user)
+    homeworkanswer.homework.finished_students.remove(homeworkanswer.creator)
     for solution in homeworkanswer.solution_set.all():
         SourceCode.objects.get(solution_id=solution.solution_id).delete()
         SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
         solution.delete()
     homeworkanswer.delete()
     return redirect(reverse('my_homework_detail', kwargs={'pk': homwork_id}))
-
-#
-# def temp_save_homework(request):
