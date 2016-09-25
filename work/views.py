@@ -16,7 +16,7 @@ from auth_system.models import MyUser
 from judge.models import ClassName, Problem, ChoiceProblem, Solution, SourceCode, SourceCodeUser, KnowledgePoint1, \
     KnowledgePoint2, Compileinfo
 from judge.views import get_testCases
-from work.models import HomeWork, HomeworkAnswer, BanJi, MyHomework
+from work.models import HomeWork, HomeworkAnswer, BanJi, MyHomework, TempHomeworkAnswer
 from django.contrib.auth.decorators import permission_required, login_required
 
 """
@@ -343,6 +343,10 @@ def do_homework(request, homework_id):
 
         # 开启判题进程，保存编程题目分数
         _thread.start_new_thread(judge_homework, (homeworkAnswer,))
+        try:
+            TempHomeworkAnswer.objects.get(creator=request.user, homework=homework).delete()
+        except ObjectDoesNotExist:
+            pass
         return redirect(reverse('show_homework_result', args=[homeworkAnswer.id]))
     else:  # 当正常访问时
         homeowork = MyHomework.objects.get(pk=homework_id)
@@ -916,5 +920,18 @@ def rejudge_homework(request, id):
     return redirect(reverse('my_homework_detail', args=(homework_answer.homework.id,)))
 
 
-def save_homework_temp():
-    pass
+def save_homework_temp(request):
+    data = request.POST.dict()
+    homework = MyHomework.objects.get(id=data['homework_id'])
+    del data['csrfmiddlewaretoken']
+    del data['homework_id']
+    TempHomeworkAnswer.objects.update_or_create(homework=homework, creator=request.user, defaults={'data': data})
+    return redirect(reverse('list_do_homework'))
+
+
+def init_homework_data(request):
+    try:
+        temp = TempHomeworkAnswer.objects.get(homework_id=request.POST['homework_id'], creator=request.user)
+        return JsonResponse({'result': 1, 'data': temp.data.replace("'", '"')})
+    except Exception as e:
+        return JsonResponse({'result': -1})

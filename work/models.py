@@ -68,8 +68,8 @@ class HomeworkAnswer(models.Model):
     保存用户提交作业后的相关信息
     """
     id = models.AutoField(primary_key=True)
-    homework = models.ForeignKey(MyHomework, null=False, verbose_name='作业')
-    creator = models.ForeignKey(MyUser, null=False, verbose_name='答题者')
+    homework = models.ForeignKey(MyHomework, null=True, verbose_name='作业')
+    creator = models.ForeignKey(MyUser,null=True,verbose_name='答题者')
     wrong_choice_problems = models.CharField(max_length=200, null=True, verbose_name='错误的选择题')  #
     wrong_choice_problems_info = models.CharField(max_length=200, null=True, verbose_name='错误的选择题保留信息')
     score = models.IntegerField(null=True, verbose_name='总成绩')
@@ -80,3 +80,11 @@ class HomeworkAnswer(models.Model):
 
     def __str__(self):
         return str(self.id)
+
+
+class TempHomeworkAnswer(models.Model):
+    """暂存表单数据"""
+    id = models.AutoField(primary_key=True)
+    homework = models.ForeignKey(MyHomework)
+    creator = models.ForeignKey(MyUser)
+    data = models.TextField(null=True)

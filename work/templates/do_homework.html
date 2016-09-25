@@ -146,7 +146,8 @@
                                     class="glyphicon glyphicon-play"></span>测试运行
                             </button>
                             测试运行得分：<span id="score-{{ problem.problem_id }}"></span>
-                            <input type="hidden" name="score-{{ problem.problem_id }}" id='score-input-{{ problem.problem_id }}'>
+                            <input type="hidden" name="score-{{ problem.problem_id }}"
+                                   id='score-input-{{ problem.problem_id }}'>
                         </div>
                     </div>
                 </div>
@@ -154,7 +155,9 @@
         </div>
 
     </form>
-    <button class="btn btn-default" onclick="check()">提交作业</button>
+    <button class="btn btn-primary" onclick="check()">提交作业</button>
+    <button class="btn btn-default" onclick="save()">暂存作业，不提交</button>
+
     <script>
         var languages = {
             0: 'C',
@@ -192,6 +195,19 @@
         $.ajaxSetup({
             data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
         });
+        function save() {
+            $.confirm({
+                        title: false, // hides the title.
+                        cancelButton: false,// hides the cancel button.
+                        confirmButton: false, // hides the confirm button.
+                        closeIcon: false, // hides the close icon.
+                        content: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i> <span class="sr-only">正在上传你的答案,请稍等</span>正在上传你的答案,请稍等' // hides content block.
+                    });
+            var htmlstr = '<input type="hidden" name="homework_id" size="20" value="{{ homework.id }}"/>';
+            $("form").append(htmlstr);
+            $("form").attr("action", "{% url 'save_homework' %}");
+            $("form").submit()
+        }
         function test_run(id) {
             var result_div = $("#result-" + id);
             var score_span = $("#score-" + id);
@@ -215,7 +231,12 @@
                                         type: "post",
                                         url: "{% url 'test_run' %}",
                                         dataType: "json",
-                                        data: {'type': 'score', 'solution_id': data.solution_id, 'problem_id': id,'homework_id':{{ homework.id }}},
+                                        data: {
+                                            'type': 'score',
+                                            'solution_id': data.solution_id,
+                                            'problem_id': id,
+                                            'homework_id':{{ homework.id }}
+                                        },
                                         success: function (data) {
                                             if (data.status == 1) {
                                                 switch (data.result) {
@@ -244,5 +265,30 @@
             return false;
         }
 
+        //导入暂存作业数据
+        $(function () {
+            $.ajax({
+                type: "post",
+                url: "{% url 'get_init_homework_data' %}",
+                dataType: "json",
+                data: {
+                    'homework_id':{{ homework.id }}
+                },
+                success: function (data) {
+                    if(data.result==1){
+                    $.each(JSON.parse(data.data), function (key, value) {
+                        if(key.indexOf('language')!=-1){
+                            $("select[name="+key+"] option[value="+value+"]").attr("selected", true);
+                        }
+                        if(key.indexOf('selection')!=-1){
+                            $("input[type='radio'][name="+key+"][value="+value+"]").prop("checked", true)
+                        }
+                        if(key.indexOf('source')!=-1){
+                            $("textarea[name="+key+"]").val(value)
+                        }
+                    });}
+                }
+            })
+        })
     </script>
 {% endblock %}
