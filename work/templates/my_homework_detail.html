@@ -5,6 +5,8 @@
     <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/locale/bootstrap-table-zh-CN.min.js"></script>
     <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/extensions/export/bootstrap-table-export.min.js"></script>
     <script src="//rawgit.com/hhurz/tableExport.jquery.plugin/master/tableExport.js"></script>
+    <script src="//cdn.bootcss.com/jquery-confirm/2.5.1/jquery-confirm.min.js"></script>
+    <link href="//cdn.bootcss.com/jquery-confirm/2.5.1/jquery-confirm.min.css" rel="stylesheet">
 {% endblock %}
 {% block content %}
     <p>
@@ -80,7 +82,7 @@
             <th data-field="username" data-valign="middle">姓名</th>
             <th data-field="create_time" data-sortable="true">完成时间</th>
             <th data-field="score" data-sortable="true">最终得分</th>
-            <th data-field="id" data-valign="middle" data-formatter="editFormatter">操作</th>
+            <th data-field="id" data-valign="middle" data-formatter="editFormatter" oncl>操作</th>
         </tr>
         </thead>
     </table>
@@ -103,8 +105,28 @@
             });
         });
 
-        function editFormatter(value) {
-            return '<a class="btn btn-success btn-xs" href="{% url '_show_homework_result' %}' + value + '/" title="查看详细"><span class="glyphicon glyphicon-eye-open"></span></a>'+
-                    ' <a class="btn btn-danger btn-xs" href="{% url '_delete_homeworkanswer' %}' + value + '/" title="删除这个记录并重做作业"><span class="glyphicon glyphicon-repeat"></span></a>';}
+        function editFormatter(value, raw, index) {
+            return '<a class="btn btn-success btn-xs" href="{% url '_show_homework_result' %}' + value + '/" title="查看详细"><span class="glyphicon glyphicon-eye-open"></span></a>' +
+                    ' <a class="btn btn-danger btn-xs" href="{% url '_delete_homeworkanswer' %}' + value + '/" title="删除这个记录并重做作业"><span class="glyphicon glyphicon-repeat"></span></a>' +
+                    ' <a class="btn btn-primary btn-xs" href="{% url '_rejudge_homework' %}' + value + '/" title="重新判分"><span class="glyphicon glyphicon-repeat"></span></a>'
+
+        }
+
+        {#        function rejudge(id) {#}
+        {#            $.ajax({#}
+        {#                type: "post",#}
+        {#                url: "{% url 'rejudge_homework' %}",#}
+        {#                dataType: "json",#}
+        {#                data: {'id':id},#}
+        {#                success: function (data) {#}
+        {#                    if (data.result == 1) {#}
+        {#                        $.alert("成功")#}
+        {#                    } else(#}
+        {#                            $.alert('失败')#}
+        {#                    )#}
+        {#                }#}
+        {#            })#}
+        {#        }#}
+
     </script>
 {% endblock %}

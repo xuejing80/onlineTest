@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import argparse
+import codecs
 import json
+import os
 import random
 import re
 import shutil
@@ -17,6 +20,9 @@ from django.views.generic.detail import DetailView
 
 from judge.forms import ProblemAddForm, ChoiceAddForm
 from .models import KnowledgePoint1, ClassName, ChoiceProblem, Problem
+
+BUFSIZE = 4096
+BOMLEN = len(codecs.BOM_UTF8)
 
 
 # 添加编程题
@@ -391,10 +397,6 @@ def un_zip(file_name):
 """
 Remove BOM(Byte Order Marker) from utf-8 files.
 """
-import os, argparse, codecs
-
-BUFSIZE = 4096
-BOMLEN = len(codecs.BOM_UTF8)
 
 
 def init_options():

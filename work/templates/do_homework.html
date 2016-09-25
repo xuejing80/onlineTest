@@ -145,6 +145,8 @@
                                     onclick="test_run({{ problem.problem_id }});return false;"><span
                                     class="glyphicon glyphicon-play"></span>测试运行
                             </button>
+                            测试运行得分：<span id="score-{{ problem.problem_id }}"></span>
+                            <input type="hidden" name="score-{{ problem.problem_id }}" id='score-input-{{ problem.problem_id }}'>
                         </div>
                     </div>
                 </div>
@@ -192,6 +194,8 @@
         });
         function test_run(id) {
             var result_div = $("#result-" + id);
+            var score_span = $("#score-" + id);
+            var score_input = $("#score-input-" + id);
             result_div.html('<div class="alert alert-default" role="alert"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>正在判断程序运行情况</div>')
             $.ajax({
                 type: "post",
@@ -211,12 +215,12 @@
                                         type: "post",
                                         url: "{% url 'test_run' %}",
                                         dataType: "json",
-                                        data: {'type': 'score', 'solution_id': data.solution_id, 'problem_id': id},
+                                        data: {'type': 'score', 'solution_id': data.solution_id, 'problem_id': id,'homework_id':{{ homework.id }}},
                                         success: function (data) {
                                             if (data.status == 1) {
                                                 switch (data.result) {
                                                     case 0:
-                                                        result_div.html('<div class="alert alert-danger" role="alert"><pre>' + data.info + '</pre></div>')
+                                                        result_div.html('<div class="alert alert-danger" role="alert"><pre>' + data.info.info + '</pre></div>');
                                                         break;
                                                     case 1:
                                                         result_div.html('<div class="alert alert-warning" role="alert">' + '总共' + data.info.total_cases + '个测试点，你通过了其中的' + data.info.right_num + '个' + '</div>')
@@ -224,6 +228,8 @@
                                                     case 2:
                                                         result_div.html('<div class="alert alert-success" role="alert">恭喜你通过了所有的测试点</div>')
                                                 }
+                                                score_span.html(data.info.score);
+                                                score_input.val(data.info.score)
                                                 int = window.clearInterval(int)
                                             } else(
                                                     result_div.html('<div class="alert alert-default" role="alert"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>正在判断程序运行情况</div>')

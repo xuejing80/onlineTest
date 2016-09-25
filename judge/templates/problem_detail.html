@@ -74,24 +74,4 @@
         </tr>
         </tbody>
     </table>
-
-    <script>
-        {#        function delete_item(x) {#}
-        {#            if (confirm("确定要删除此题目吗？")) {#}
-        {#                id = {{ problem.problem_id }};#}
-        {#                $.ajax({#}
-        {#                    type: "post",#}
-        {#                    data:{'ids[]',id},#}
-        {#                    url: "{% url 'del_problem' %}",#}
-        {#                    success: function (data) {#}
-        {#                        alert("删除成功，返回题目列表");#}
-        {#                        window.location.href = '{% url 'problemlist' %}';#}
-        {#                    },#}
-        {#                    error: function () {#}
-        {#                        alert("删除失败，题目可能已经被删除")#}
-        {#                    }#}
-        {#                });#}
-        {#            }#}
-        {#        }#}
-    </script>
 {% endblock %}
