@@ -596,13 +596,13 @@ def get_my_homework_todo(request):
     return JsonResponse(json_data)
 
 
-def get_problem_score(homework_answer):
+def get_problem_score(homework_answer, judged_score=0):
     """
     获取某次作业的分数
     :param homework_answer: 已提交的作业
     :return: 作业的编程题部分分数
     """
-    score = 0
+    score = judged_score
     homework = homework_answer.homework
     solutions = homework_answer.solution_set
     problem_info = []
@@ -921,17 +921,22 @@ def rejudge_homework(request, id):
 
 
 def save_homework_temp(request):
+    """
+    暂存作业
+    :param request: 请求
+    :return: 重定向到作业列表
+    """
     data = request.POST.dict()
     homework = MyHomework.objects.get(id=data['homework_id'])
-    del data['csrfmiddlewaretoken']
-    del data['homework_id']
-    TempHomeworkAnswer.objects.update_or_create(homework=homework, creator=request.user, defaults={'data': data})
+    del data['csrfmiddlewaretoken']  # 去除表单中的scrf项
+    del data['homework_id']  # 去除表单中的homework_id项
+    TempHomeworkAnswer.objects.update_or_create(homework=homework, creator=request.user, defaults={'data': json.dumps(data)})
     return redirect(reverse('list_do_homework'))
 
 
 def init_homework_data(request):
     try:
         temp = TempHomeworkAnswer.objects.get(homework_id=request.POST['homework_id'], creator=request.user)
-        return JsonResponse({'result': 1, 'data': temp.data.replace("'", '"')})
+        return JsonResponse({'result': 1, 'data': json.loads(temp.data)})
     except Exception as e:
         return JsonResponse({'result': -1})

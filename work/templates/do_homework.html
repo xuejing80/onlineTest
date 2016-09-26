@@ -276,7 +276,7 @@
                 },
                 success: function (data) {
                     if(data.result==1){
-                    $.each(JSON.parse(data.data), function (key, value) {
+                    $.each(data.data, function (key, value) {
                         if(key.indexOf('language')!=-1){
                             $("select[name="+key+"] option[value="+value+"]").attr("selected", true);
                         }
