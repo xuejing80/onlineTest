@@ -9,11 +9,39 @@
     <div>
         <div class="site-index">
             <div class="jumbotron">
-{#                <div class="alert alert-danger" role="alert">判题功能维护中！部分题目可能暂时无法算分！</div>#}
+                {#                <div class="alert alert-danger" role="alert">判题功能维护中！部分题目可能暂时无法算分！</div>#}
                 <h1>每天进步一点点</h1>
                 <p class="lead">南京邮电大学计算机语言课程作业平台欢迎您！</p>
 
-                <p><a class="btn btn-lg btn-success" href="{% url 'list_do_homework' %}">进入作业列表</a></p>
+                <p><a class="btn btn-lg btn-success" href="{% url 'list_do_homework' %}">进入作业列表</a>
+                    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">
+                        查看使用教程
+                    </button>
+                </p>
+
+            </div>
+            <!-- Button trigger modal -->
+
+
+            <!-- Modal -->
+            <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog  modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal"><span
+                                    aria-hidden="true">&times;</span><span class="sr-only">关闭</span></button>
+                            <h4 class="modal-title" id="myModalLabel">平台使用说明</h4>
+                        </div>
+                        <div class="modal-body">
+                            <div class="container video-container" id="video-container">
+                                <video width="" height="auto" controls id="index-video">
+                                    <source src="{% static 'videos/平台学生的使用说明.mp4' %}" type="video/mp4">
+                                </video>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="body-content">

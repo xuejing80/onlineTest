@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block extrahead %}
-    <script src="//cdn.bootcss.com/jquery-confirm/2.5.1/jquery-confirm.min.js"></script>
-    <link href="//cdn.bootcss.com/jquery-confirm/2.5.1/jquery-confirm.min.css" rel="stylesheet">
+    {% load static %}
+    <script src="{% static 'assets/js/jquery-confirm.min.js' %}"></script>
+    <link href="{% static 'assets/css/jquery-confirm.min.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
     <form method="post">
@@ -197,12 +198,12 @@
         });
         function save() {
             $.confirm({
-                        title: false, // hides the title.
-                        cancelButton: false,// hides the cancel button.
-                        confirmButton: false, // hides the confirm button.
-                        closeIcon: false, // hides the close icon.
-                        content: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i> <span class="sr-only">正在上传你的答案,请稍等</span>正在上传你的答案,请稍等' // hides content block.
-                    });
+                title: false, // hides the title.
+                cancelButton: false,// hides the cancel button.
+                confirmButton: false, // hides the confirm button.
+                closeIcon: false, // hides the close icon.
+                content: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i> <span class="sr-only">正在上传你的答案,请稍等</span>正在上传你的答案,请稍等' // hides content block.
+            });
             var htmlstr = '<input type="hidden" name="homework_id" size="20" value="{{ homework.id }}"/>';
             $("form").append(htmlstr);
             $("form").attr("action", "{% url 'save_homework' %}");
@@ -275,18 +276,19 @@
                     'homework_id':{{ homework.id }}
                 },
                 success: function (data) {
-                    if(data.result==1){
-                    $.each(data.data, function (key, value) {
-                        if(key.indexOf('language')!=-1){
-                            $("select[name="+key+"] option[value="+value+"]").attr("selected", true);
-                        }
-                        if(key.indexOf('selection')!=-1){
-                            $("input[type='radio'][name="+key+"][value="+value+"]").prop("checked", true)
-                        }
-                        if(key.indexOf('source')!=-1){
-                            $("textarea[name="+key+"]").val(value)
-                        }
-                    });}
+                    if (data.result == 1) {
+                        $.each(data.data, function (key, value) {
+                            if (key.indexOf('language') != -1) {
+                                $("select[name=" + key + "] option[value=" + value + "]").attr("selected", true);
+                            }
+                            if (key.indexOf('selection') != -1) {
+                                $("input[type='radio'][name=" + key + "][value=" + value + "]").prop("checked", true)
+                            }
+                            if (key.indexOf('source') != -1) {
+                                $("textarea[name=" + key + "]").val(value)
+                            }
+                        });
+                    }
                 }
             })
         })

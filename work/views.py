@@ -930,7 +930,8 @@ def save_homework_temp(request):
     homework = MyHomework.objects.get(id=data['homework_id'])
     del data['csrfmiddlewaretoken']  # 去除表单中的scrf项
     del data['homework_id']  # 去除表单中的homework_id项
-    TempHomeworkAnswer.objects.update_or_create(homework=homework, creator=request.user, defaults={'data': json.dumps(data)})
+    TempHomeworkAnswer.objects.update_or_create(homework=homework, creator=request.user,
+                                                defaults={'data': json.dumps(data)})
     return redirect(reverse('list_do_homework'))
 
 
@@ -940,3 +941,7 @@ def init_homework_data(request):
         return JsonResponse({'result': 1, 'data': json.loads(temp.data)})
     except Exception as e:
         return JsonResponse({'result': -1})
+
+
+def file_download(request):
+    return render(request, 'file_download.html', context={'title': '教学资源下载'})
