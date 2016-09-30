@@ -313,10 +313,12 @@ def do_homework(request, homework_id):
     if request.method == 'POST':  # 当提交作业时
         wrong_ids, wrong_info = '', ''
         homework = MyHomework.objects.get(pk=homework_id)
+        if request.user in homework.finished_students.all():  # 防止重复提交
+            return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
+        else:
+            homework.finished_students.add(request.user)
         homeworkAnswer = HomeworkAnswer(creator=request.user, homework=homework)
         homeworkAnswer.save()
-        if request.user in homework.finished_students.all():
-            return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
 
         # 判断选择题，保存错误选择题到目录
         for id in homework.choice_problem_ids.split(','):
@@ -327,23 +329,23 @@ def do_homework(request, homework_id):
         # 创建编程题的solution，等待oj后台轮询判题
         for k, v in request.POST.items():
             if k.startswith('source'):
+                code = v if v else  "未回答"
                 solution = Solution(problem_id=k[7:], user_id=request.user.username,
                                     language=request.POST['language-' + k[7:]], ip=request.META['REMOTE_ADDR'],
                                     code_length=len(v))
                 solution.save()
                 homeworkAnswer.solution_set.add(solution)
-                source_code = SourceCode(solution_id=solution.solution_id, source=v)
+                source_code = SourceCode(solution_id=solution.solution_id, source=code)
                 source_code.save()
-                source_code_user = SourceCodeUser(solution_id=solution.solution_id, source=v)
+                source_code_user = SourceCodeUser(solution_id=solution.solution_id, source=code)
                 source_code_user.save()
         homeworkAnswer.wrong_choice_problems = wrong_ids
         homeworkAnswer.wrong_choice_problems_info = wrong_info
         homeworkAnswer.save()
-        homework.finished_students.add(request.user)
 
         # 开启判题进程，保存编程题目分数
         _thread.start_new_thread(judge_homework, (homeworkAnswer,))
-        try:
+        try:  # 如果有暂存的该作业答案，删除掉
             TempHomeworkAnswer.objects.get(creator=request.user, homework=homework).delete()
         except ObjectDoesNotExist:
             pass
@@ -616,7 +618,7 @@ def get_problem_score(homework_answer, judged_score=0):
                     score += int(case['score'])
         except Exception as e:
             print("error on get problem score！solution_id: %d ,error : %s args: %s" % (
-                solution.solution_id, e, e.args.__str__()))
+                info['id'], e, e.args.__str__()))
     return score
 
 

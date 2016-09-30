@@ -69,12 +69,12 @@ class HomeworkAnswer(models.Model):
     """
     id = models.AutoField(primary_key=True)
     homework = models.ForeignKey(MyHomework, null=True, verbose_name='作业')
-    creator = models.ForeignKey(MyUser,null=True,verbose_name='答题者')
-    wrong_choice_problems = models.CharField(max_length=200, null=True, verbose_name='错误的选择题')  #
-    wrong_choice_problems_info = models.CharField(max_length=200, null=True, verbose_name='错误的选择题保留信息')
-    score = models.IntegerField(null=True, verbose_name='总成绩')
-    choice_problem_score = models.IntegerField(null=True, verbose_name='选择题成绩')
-    problem_score = models.IntegerField(null=True, verbose_name='编程题成绩')
+    creator = models.ForeignKey(MyUser, null=True, verbose_name='答题者')
+    wrong_choice_problems = models.CharField(max_length=200, null=False, verbose_name='错误的选择题', default='')  #
+    wrong_choice_problems_info = models.CharField(max_length=200, null=False, verbose_name='错误的选择题保留信息', default='')
+    score = models.IntegerField(null=False, verbose_name='总成绩', default=0)
+    choice_problem_score = models.IntegerField(null=False, verbose_name='选择题成绩', default=0)
+    problem_score = models.IntegerField(null=False, verbose_name='编程题成绩', default=0)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name='答题时间')
     judged = models.BooleanField(default=False, verbose_name='是否已经判分？')
 
