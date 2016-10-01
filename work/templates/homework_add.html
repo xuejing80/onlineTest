@@ -69,7 +69,16 @@
                 <input type="checkbox" id="inlineCheckbox1" value="6" name="languages" checked> Python
             </label>
         </div>
+        <div class="form-group">
+            <label for="allow_resubmit">是否允许重复提交？</label>
+            <label class="checkbox-inline">
+                <input type="radio" id="allow_resubmit" value="1" name="allow_resubmit" checked>是
+            </label>
+            <label class="checkbox-inline">
+                <input type="radio" id="allow_resubmit" value="0" name="allow_resubmit">否
+            </label>
 
+        </div>
         <div class="row">
             <div class='col-sm-6'>
                 <div class="form-group">
@@ -598,6 +607,7 @@
                             $('#datetimepicker1').data("DateTimePicker").date('{{ start_time }}');
                             $('#datetimepicker2').data("DateTimePicker").date('{{ end_time }}');
                             $("#classname option[value='{{ courser_id }}']").attr("selected", true);
+                            $('#allow_resubmit[value="{{ allow_resubmit }}"]').attr('checked',true);
                             data = window.location.pathname.split('-').pop();
                             $.ajax({
                                 type: "post",

@@ -5,6 +5,12 @@
     <link href="{% static 'assets/css/jquery-confirm.min.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
+    {% if homework.allow_resubmit %}
+        <div class="alert alert-success" role="alert">此份作业允许重复提交，对成绩不满意可到已完成作业中点击<a class="btn btn-danger btn-xs"
+                                                                                    href="#"><span
+                class="glyphicon glyphicon-repeat"></span></a>重新提交
+        </div>{% else %}
+        <div class="alert alert-danger" role="alert"><strong>注意！</strong>此作业只能提交一次！(临时保存次数无限制)</div>{% endif %}
     <form method="post">
         {% csrf_token %}
         <h2>选择题</h2>
@@ -176,7 +182,7 @@
         function check() {
             $.confirm({
                 title: '确认提交',
-                content: '确定要提交作业吗？作业只能提交一次，提交后您将无法再修改答案',
+                content: '确定要提交作业吗？{% if homework.allow_resubmit %}此次作业允许提交多次，如果对成绩不满意，可以去已完成作业列表中选择重做{% else %}此作业只允许<strong>提交一次</strong>!提交后无法重新提交{% endif %}',
                 confirmButton: '我已检查完成，确定提交',
                 cancelButton: '取消',
                 confirmButtonClass: 'btn-info',

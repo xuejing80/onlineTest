@@ -57,6 +57,7 @@ class MyHomework(models.Model):
     allowed_languages = models.CharField(max_length=50)
     banji = models.ManyToManyField(BanJi)
     finished_students = models.ManyToManyField(MyUser, related_name='finished_students', null=True, blank=True)
+    allow_resubmit = models.BooleanField(default=False, verbose_name='是否允许重复提交作业？')
     total_score = models.IntegerField()
 
     def __str__(self):

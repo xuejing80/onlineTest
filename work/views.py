@@ -240,12 +240,14 @@ def update_my_homework(request, pk):
         homework.total_score = request.POST['total_score']
         homework.allowed_languages = ','.join(request.POST.getlist('languages'))
         homework.choice_problem_info = request.POST['choice-problem-info']
+        homework.allow_resubmit = True if request.POST['allow_resubmit'] == '1' else False
         homework.save()
         return redirect(reverse('my_homework_detail', args=[homework.pk]))
     else:
         context = {'languages': homework.allowed_languages, 'classnames': ClassName.objects.all(),
                    'name': homework.name, 'courser_id': homework.courser.id, 'start_time': homework.start_time,
-                   'end_time': homework.end_time, 'title': '修改我的作业"' + homework.name + '"'}
+                   'end_time': homework.end_time, 'title': '修改我的作业"' + homework.name + '"',
+                   'allow_resubmit': '1' if homework.allow_resubmit else '0'}
     return render(request, 'homework_add.html', context=context)  # 查看作业结果
 
 
@@ -285,7 +287,7 @@ def show_homework_result(request, id):
     return render(request, 'homework_result.html',
                   context={'choice_problems': choice_problems, 'problem_score': homework_answer.problem_score,
                            'choice_problem_score': homework_answer.choice_problem_score,
-                           'score': homework_answer.score, 'problems': problems})
+                           'score': homework_answer.score, 'problems': problems,'title':' {}的"{}"详细'.format(homework_answer.creator.username,homework.name)})
 
 
 def get_choice_score(homework_answer):
@@ -313,16 +315,28 @@ def do_homework(request, homework_id):
     if request.method == 'POST':  # 当提交作业时
         wrong_ids, wrong_info = '', ''
         homework = MyHomework.objects.get(pk=homework_id)
-        if request.user in homework.finished_students.all():  # 防止重复提交
-            return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
-        else:
-            homework.finished_students.add(request.user)
-            try:
-                HomeworkAnswer.objects.get(homework=homework, creator=request.user)
+        if not homework.allow_resubmit:
+            if request.user in homework.finished_students.all():  # 防止重复提交
                 return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
+            else:
+                homework.finished_students.add(request.user)
+                try:
+                    HomeworkAnswer.objects.get(homework=homework, creator=request.user)
+                    return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
+                except ObjectDoesNotExist:
+                    pass
+            homeworkAnswer = HomeworkAnswer(creator=request.user, homework=homework)
+        else:
+            try:
+                homeworkAnswer = HomeworkAnswer.objects.get(creator=request.user, homework=homework)
+                for solution in homeworkAnswer.solution_set.all():
+                    SourceCode.objects.get(solution_id=solution.solution_id).delete()
+                    SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
+                    solution.delete()
+                homeworkAnswer.judged = False
             except ObjectDoesNotExist:
-                pass
-        homeworkAnswer = HomeworkAnswer(creator=request.user, homework=homework)
+                homework.finished_students.add(request.user)
+                homeworkAnswer = HomeworkAnswer(creator=request.user, homework=homework)
         homeworkAnswer.save()
 
         # 判断选择题，保存错误选择题到目录
@@ -367,7 +381,7 @@ def do_homework(request, homework_id):
             if id:
                 problems.append(Problem.objects.get(pk=id))
         return render(request, 'do_homework.html',
-                      context={'homework': homeowork, 'problems': problems, 'choice_problems': choice_problems})
+                      context={'homework': homeowork, 'problems': problems, 'choice_problems': choice_problems,'title':homeowork.name})
 
 
 @permission_required('work.add_banji')
@@ -669,7 +683,9 @@ def get_finished_homework(request):
                   'create_time': homework_answer.create_time.strftime('%Y-%m-%d %H:%M:%S'),
                   'id': homework_answer.pk,
                   'teacher': 'dd',
-                  'score': score
+                  'score': score,
+                  'allow_resubmit': homework_answer.homework.allow_resubmit,
+                  'homework_id': homework_answer.homework.id
                   }
         recodes.append(recode)
     json_data['rows'] = recodes
@@ -816,7 +832,7 @@ def add_myhomework(request):
     :return: 如果为GET请求，返回新建作业页面，如果为POST，返回到新建的题目的
     """
     if request.method == 'POST':
-        print(','.join(request.POST.getlist('languages')))
+        allow_resubmit = True if request.POST['allow_resubmit'] == "1" else False
         homework = MyHomework(name=request.POST['name'],
                               choice_problem_ids=request.POST['choice-problem-ids'],
                               problem_ids=request.POST['problem-ids'],
@@ -827,7 +843,8 @@ def add_myhomework(request):
                               end_time=request.POST['end_time'],
                               allowed_languages=','.join(request.POST.getlist('languages')),
                               total_score=request.POST['total_score'],
-                              creater=request.user)
+                              creater=request.user,
+                              allow_resubmit=allow_resubmit)
         homework.save()
         return redirect(reverse("my_homework_detail", args=[homework.pk]))
     classnames = ClassName.objects.all()
