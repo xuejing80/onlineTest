@@ -43,7 +43,7 @@ class MyUserManager(BaseUserManager):
 
 class MyUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(
-        verbose_name='邮箱，用以登陆',
+        verbose_name='邮箱，用以登录',
         max_length=255,
         unique=True,
     )

@@ -71,7 +71,7 @@ class UserControl(View):
 
     def logout(self, request):
         if not request.user.is_authenticated():
-            logger.error(u'[UserControl]用户未登陆')
+            logger.error(u'[UserControl]用户未登录')
             raise PermissionDenied
         else:
             auth.logout(request)
@@ -123,7 +123,7 @@ class UserControl(View):
 
     def changepassword(self, request):
         if not request.user.is_authenticated():
-            logger.error(u'[UserControl]用户未登陆')
+            logger.error(u'[UserControl]用户未登录')
             raise PermissionDenied
 
         form = PasswordChangeForm(request.user, request.POST)
