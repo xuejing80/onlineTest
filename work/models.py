@@ -4,6 +4,9 @@ from auth_system.models import MyUser
 
 
 class BanJi(models.Model):
+    """
+    班级
+    """
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=40, verbose_name='班级名称')
     teacher = models.ForeignKey(MyUser, null=True, related_name='banJi_teacher')
@@ -13,10 +16,13 @@ class BanJi(models.Model):
     end_time = models.DateTimeField()
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class HomeWork(models.Model):
+    """
+    公共作业
+    """
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=40)
     courser = models.ForeignKey('judge.ClassName', verbose_name='所属课程')
@@ -31,10 +37,13 @@ class HomeWork(models.Model):
     total_score = models.IntegerField()
 
     def __str__(self):
-        return self.name
+        return str(self.id)
 
 
 class MyHomework(models.Model):
+    """
+    私有作业
+    """
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=40)
     courser = models.ForeignKey('judge.ClassName', verbose_name='所属课程')
@@ -48,24 +57,35 @@ class MyHomework(models.Model):
     allowed_languages = models.CharField(max_length=50)
     banji = models.ManyToManyField(BanJi)
     finished_students = models.ManyToManyField(MyUser, related_name='finished_students', null=True, blank=True)
+    allow_resubmit = models.BooleanField(default=False, verbose_name='是否允许重复提交作业？')
     total_score = models.IntegerField()
 
     def __str__(self):
-        return self.name
+        return str(self.id)
 
 
 class HomeworkAnswer(models.Model):
+    """
+    保存用户提交作业后的相关信息
+    """
     id = models.AutoField(primary_key=True)
     homework = models.ForeignKey(MyHomework, null=True, verbose_name='作业')
     creator = models.ForeignKey(MyUser, null=True, verbose_name='答题者')
-    wrong_choice_problems = models.CharField(max_length=200, null=True)  #
-    wrong_choice_problems_info = models.CharField(max_length=200, null=True)
-    score = models.IntegerField(null=True)
-    choice_problem_score = models.IntegerField(null=True)
-    problem_score = models.IntegerField(null=True)
-    choice_problem_review_info = models.CharField(max_length=500)
-    create_time = models.DateTimeField(auto_now_add=True)
-    judged = models.BooleanField(default=False)
+    wrong_choice_problems = models.CharField(max_length=200, null=False, verbose_name='错误的选择题', default='')  #
+    wrong_choice_problems_info = models.CharField(max_length=200, null=False, verbose_name='错误的选择题保留信息', default='')
+    score = models.IntegerField(null=False, verbose_name='总成绩', default=0)
+    choice_problem_score = models.IntegerField(null=False, verbose_name='选择题成绩', default=0)
+    problem_score = models.IntegerField(null=False, verbose_name='编程题成绩', default=0)
+    create_time = models.DateTimeField(auto_now_add=True, verbose_name='答题时间')
+    judged = models.BooleanField(default=False, verbose_name='是否已经判分？')
 
     def __str__(self):
-        return self.id
+        return str(self.id)
+
+
+class TempHomeworkAnswer(models.Model):
+    """暂存表单数据"""
+    id = models.AutoField(primary_key=True)
+    homework = models.ForeignKey(MyHomework)
+    creator = models.ForeignKey(MyUser)
+    data = models.TextField(null=True)

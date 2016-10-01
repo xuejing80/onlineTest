@@ -1,9 +1,16 @@
 {% extends 'base.html' %}
 {% block extrahead %}
-    <script src="//cdn.bootcss.com/jquery-confirm/2.5.1/jquery-confirm.min.js"></script>
-    <link href="//cdn.bootcss.com/jquery-confirm/2.5.1/jquery-confirm.min.css" rel="stylesheet">
+    {% load static %}
+    <script src="{% static 'assets/js/jquery-confirm.min.js' %}"></script>
+    <link href="{% static 'assets/css/jquery-confirm.min.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
+    {% if homework.allow_resubmit %}
+        <div class="alert alert-success" role="alert">此份作业允许重复提交，对成绩不满意可到已完成作业中点击<a class="btn btn-danger btn-xs"
+                                                                                    href="#"><span
+                class="glyphicon glyphicon-repeat"></span></a>重新提交
+        </div>{% else %}
+        <div class="alert alert-danger" role="alert"><strong>注意！</strong>此作业只能提交一次！(临时保存次数无限制)</div>{% endif %}
     <form method="post">
         {% csrf_token %}
         <h2>选择题</h2>
@@ -145,6 +152,9 @@
                                     onclick="test_run({{ problem.problem_id }});return false;"><span
                                     class="glyphicon glyphicon-play"></span>测试运行
                             </button>
+                            测试运行得分：<span id="score-{{ problem.problem_id }}"></span>
+                            <input type="hidden" name="score-{{ problem.problem_id }}"
+                                   id='score-input-{{ problem.problem_id }}'>
                         </div>
                     </div>
                 </div>
@@ -152,7 +162,9 @@
         </div>
 
     </form>
-    <button class="btn btn-default" onclick="check()">提交作业</button>
+    <button class="btn btn-primary" onclick="check()">提交作业</button>
+    <button class="btn btn-default" onclick="save()">暂存作业，不提交</button>
+
     <script>
         var languages = {
             0: 'C',
@@ -170,7 +182,7 @@
         function check() {
             $.confirm({
                 title: '确认提交',
-                content: '确定要提交作业吗？作业只能提交一次，提交后您将无法再修改答案',
+                content: '确定要提交作业吗？{% if homework.allow_resubmit %}此次作业允许提交多次，如果对成绩不满意，可以去已完成作业列表中选择重做{% else %}此作业只允许<strong>提交一次</strong>!提交后无法重新提交{% endif %}',
                 confirmButton: '我已检查完成，确定提交',
                 cancelButton: '取消',
                 confirmButtonClass: 'btn-info',
@@ -190,8 +202,23 @@
         $.ajaxSetup({
             data: {csrfmiddlewaretoken: '{{ csrf_token }}'}
         });
+        function save() {
+            $.confirm({
+                title: false, // hides the title.
+                cancelButton: false,// hides the cancel button.
+                confirmButton: false, // hides the confirm button.
+                closeIcon: false, // hides the close icon.
+                content: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i> <span class="sr-only">正在上传你的答案,请稍等</span>正在上传你的答案,请稍等' // hides content block.
+            });
+            var htmlstr = '<input type="hidden" name="homework_id" size="20" value="{{ homework.id }}"/>';
+            $("form").append(htmlstr);
+            $("form").attr("action", "{% url 'save_homework' %}");
+            $("form").submit()
+        }
         function test_run(id) {
             var result_div = $("#result-" + id);
+            var score_span = $("#score-" + id);
+            var score_input = $("#score-input-" + id);
             result_div.html('<div class="alert alert-default" role="alert"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>正在判断程序运行情况</div>')
             $.ajax({
                 type: "post",
@@ -211,12 +238,17 @@
                                         type: "post",
                                         url: "{% url 'test_run' %}",
                                         dataType: "json",
-                                        data: {'type': 'score', 'solution_id': data.solution_id, 'problem_id': id},
+                                        data: {
+                                            'type': 'score',
+                                            'solution_id': data.solution_id,
+                                            'problem_id': id,
+                                            'homework_id':{{ homework.id }}
+                                        },
                                         success: function (data) {
                                             if (data.status == 1) {
                                                 switch (data.result) {
                                                     case 0:
-                                                        result_div.html('<div class="alert alert-danger" role="alert"><pre>' + data.info + '</pre></div>')
+                                                        result_div.html('<div class="alert alert-danger" role="alert"><pre>' + data.info.info + '</pre></div>');
                                                         break;
                                                     case 1:
                                                         result_div.html('<div class="alert alert-warning" role="alert">' + '总共' + data.info.total_cases + '个测试点，你通过了其中的' + data.info.right_num + '个' + '</div>')
@@ -224,6 +256,8 @@
                                                     case 2:
                                                         result_div.html('<div class="alert alert-success" role="alert">恭喜你通过了所有的测试点</div>')
                                                 }
+                                                score_span.html(data.info.score);
+                                                score_input.val(data.info.score)
                                                 int = window.clearInterval(int)
                                             } else(
                                                     result_div.html('<div class="alert alert-default" role="alert"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>正在判断程序运行情况</div>')
@@ -238,5 +272,31 @@
             return false;
         }
 
+        //导入暂存作业数据
+        $(function () {
+            $.ajax({
+                type: "post",
+                url: "{% url 'get_init_homework_data' %}",
+                dataType: "json",
+                data: {
+                    'homework_id':{{ homework.id }}
+                },
+                success: function (data) {
+                    if (data.result == 1) {
+                        $.each(data.data, function (key, value) {
+                            if (key.indexOf('language') != -1) {
+                                $("select[name=" + key + "] option[value=" + value + "]").attr("selected", true);
+                            }
+                            if (key.indexOf('selection') != -1) {
+                                $("input[type='radio'][name=" + key + "][value=" + value + "]").prop("checked", true)
+                            }
+                            if (key.indexOf('source') != -1) {
+                                $("textarea[name=" + key + "]").val(value)
+                            }
+                        });
+                    }
+                }
+            })
+        })
     </script>
 {% endblock %}

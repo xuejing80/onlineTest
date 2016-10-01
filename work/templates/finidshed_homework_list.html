@@ -1,10 +1,11 @@
 {% extends 'base.html' %}
 {% block extrahead %}
-    <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/bootstrap-table.min.js"></script>
-    <link href="//cdn.bootcss.com/bootstrap-table/1.11.0/bootstrap-table.min.css" rel="stylesheet">
-    <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/locale/bootstrap-table-zh-CN.min.js"></script>
-    <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/extensions/export/bootstrap-table-export.min.js"></script>
-    <script src="//rawgit.com/hhurz/tableExport.jquery.plugin/master/tableExport.js"></script>
+    {% load static %}
+    <script src="{% static 'assets/js/bootstrap-table.min.js' %}"></script>
+    <link href="{% static 'assets/css/bootstrap-table.min.css' %}" rel="stylesheet">
+    <script src="{% static 'assets/js/bootstrap-table-zh-CN.min.js' %}"></script>
+    <script src="{% static 'assets/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'assets/js/tableExport.js' %}"></script>
 {% endblock %}
 {% block content %}
     <ol class="breadcrumb">
@@ -46,6 +47,8 @@
             <th data-field="create_time" data-sortable="true">完成时间</th>
             <th data-field="score" data-sortable="true">最终得分</th>
             <th data-field="id" data-valign="middle" data-formatter="editFormatter">操作</th>
+            <th data-field="allow_resubmit" data-visible="false"></th>
+            <th data-field="homework_id" data-visible="false"></th>
         </tr>
         </thead>
     </table>
@@ -69,7 +72,11 @@
         });
 
 
-        function editFormatter(value) {
+        function editFormatter(value, row) {
+            if (row.allow_resubmit) {
+                return '<a class="btn btn-primary btn-xs" href="{% url '_show_homework_result' %}' + value + '/" title="查看详细"><span class="glyphicon glyphicon-eye-open"></span></a> ' +
+                        '<a class="btn btn-danger btn-xs" href="{% url '_do_homework' %}' + row.homework_id + '/" title="重做此次作业"><span class="glyphicon glyphicon-repeat"></span></a>'
+            }
             return '<a class="btn btn-primary btn-xs" href="{% url '_show_homework_result' %}' + value + '/" title="查看详细"><span class="glyphicon glyphicon-eye-open"></span></a>';
         }
     </script>

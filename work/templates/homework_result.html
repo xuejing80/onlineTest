@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}查看作业成绩详细{% endblock %}
 {% block extrahead %}
-    <script src="//cdn.bootcss.com/highlight.js/9.6.0/highlight.min.js"></script>
-    <link href="//cdn.bootcss.com/highlight.js/9.6.0/styles/default.min.css" rel="stylesheet">
+    {% load static %}
+    <script src="{% static 'assets/js/highlight.pack.js' %}"></script>
+    <link href="{% static 'assets/css/default.css' %}" rel="stylesheet">
 {% endblock %}
 {% block content %}
     <ol class="breadcrumb">

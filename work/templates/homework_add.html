@@ -1,22 +1,26 @@
 {% extends 'base.html' %}
 {% block title %}{{ title }}{% endblock %}
 {% block extrahead %}
-    <script src="//cdn.bootcss.com/moment.js/2.14.1/moment.min.js"></script>
-    <script src="//cdn.bootcss.com/moment.js/2.14.1/locale/zh-cn.js"></script>
-    <link href="//cdn.bootcss.com/x-editable/1.5.1/bootstrap-editable/css/bootstrap-editable.css" rel="stylesheet">
-    <link href="//cdn.bootcss.com/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css"
+    {% load static %}
+    <script src="{% static 'assets/js/bootstrap-table.min.js' %}"></script>
+    <link href="{% static 'assets/css/bootstrap-table.min.css' %}" rel="stylesheet">
+    <script src="{% static 'assets/js/bootstrap-table-zh-CN.min.js' %}"></script>
+    <script src="{% static 'assets/js/bootstrap-table-export.min.js' %}"></script>
+    <script src="{% static 'assets/js/tableExport.js' %}"></script>
+    <script src="{% static 'assets/js/jquery-confirm.min.js' %}"></script>
+    <link href="{% static 'assets/css/jquery-confirm.min.css' %}" rel="stylesheet">
+    <script src="{% static 'assets/js/moment/moment.min.js' %}"></script>
+    <script src="{% static 'assets/js/moment/zh-cn.js' %}"></script>
+    <link href="{% static 'assets/css/bootstrap-editable.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/bootstrap-datetimepicker.min.css' %}"
           rel="stylesheet">
-    <script src="//cdn.bootcss.com/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
-    <link href="//cdn.bootcss.com/bootstrap-table/1.11.0/bootstrap-table.min.css" rel="stylesheet">
-    {% load staticfiles %}
+    <script src="{% static 'assets/js/bootstrap-datetimepicker.min.js' %}"></script>
     <script src="{% static 'js/jquery.tablednd.js' %}"></script>
-    <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/bootstrap-table.min.js"></script>
-    <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/locale/bootstrap-table-zh-CN.min.js"></script>
-    <link href="//cdn.bootcss.com/bootstrap-table/1.11.0/extensions/reorder-rows/bootstrap-table-reorder-rows.min.css"
+    <link href="{% static 'assets/css/bootstrap-table-reorder-rows.min.css' %}"
           rel="stylesheet">
-    <script src="//cdn.bootcss.com/bootstrap-table/1.11.0/extensions/reorder-rows/bootstrap-table-reorder-rows.min.js"></script>
-    <script src="//cdn.bootcss.com/bootstrap-table/1.10.1/extensions/editable/bootstrap-table-editable.min.js"></script>
-    <script src="//rawgit.com/vitalets/x-editable/master/dist/bootstrap3-editable/js/bootstrap-editable.js"></script>
+    <script src="{% static 'assets/js/bootstrap-table-reorder-rows.min.js' %}"></script>
+    <script src="{% static 'assets/js/editable/bootstrap-table-editable.min.js' %}"></script>
+    <script src="{% static 'assets/js/editable/bootstrap-editable.js' %}"></script>
 {% endblock %}
 {% block content %}
     <ol class="breadcrumb">
@@ -65,7 +69,16 @@
                 <input type="checkbox" id="inlineCheckbox1" value="6" name="languages" checked> Python
             </label>
         </div>
+        <div class="form-group">
+            <label for="allow_resubmit">是否允许重复提交？</label>
+            <label class="checkbox-inline">
+                <input type="radio" id="allow_resubmit" value="1" name="allow_resubmit" checked>是
+            </label>
+            <label class="checkbox-inline">
+                <input type="radio" id="allow_resubmit" value="0" name="allow_resubmit">否
+            </label>
 
+        </div>
         <div class="row">
             <div class='col-sm-6'>
                 <div class="form-group">
@@ -594,6 +607,7 @@
                             $('#datetimepicker1').data("DateTimePicker").date('{{ start_time }}');
                             $('#datetimepicker2').data("DateTimePicker").date('{{ end_time }}');
                             $("#classname option[value='{{ courser_id }}']").attr("selected", true);
+                            $('#allow_resubmit[value="{{ allow_resubmit }}"]').attr('checked',true);
                             data = window.location.pathname.split('-').pop();
                             $.ajax({
                                 type: "post",

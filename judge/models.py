@@ -132,11 +132,17 @@ class Solution(models.Model):
     judgetime = models.DateTimeField(blank=True, null=True)
     pass_rate = models.DecimalField(max_digits=2, decimal_places=2, default=0.00)
     lint_error = models.IntegerField(default=0)
-    homework_answer = models.ForeignKey(HomeworkAnswer,null=True)
+    homework_answer = models.ForeignKey(HomeworkAnswer, null=True)
     oi_info = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'solution'
+
+    def __str__(self):
+        try:
+            return str(self.homework_answer.id)
+        except:
+            return 'none'
 
 
 class SourceCode(models.Model):

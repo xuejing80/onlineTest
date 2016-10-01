@@ -11,9 +11,9 @@ class MyUserManager(BaseUserManager):
             birth and password.
             """
         if not email:
-            raise ValueError('Users must have an email address')
-        if not 8 < len(id_num) < 16:
-            raise ValueError('Users must have an email address')
+            raise ValueError('邮箱为必填项目')
+        if not 4 < len(id_num) < 16:
+            raise ValueError('请调整用户名长度')
         user = self.model(
             email=self.normalize_email(email),
             username=username,
