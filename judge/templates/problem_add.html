@@ -343,11 +343,15 @@
             });
         });
         function submitTest() {
-            if (valid) {
+            if (window.location.href.indexOf('add-problem') != -1) {
+                if (valid) {
+                    return true
+                } else {
+                    alert("您未上传测试用例或测试用例格式不正确，请检查后重试");
+                    return false
+                }
+            }else{
                 return true
-            } else {
-                alert("您未上传测试用例或测试用例格式不正确，请检查后重试");
-                return false
             }
         }
     </script>
