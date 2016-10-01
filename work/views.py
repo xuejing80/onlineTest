@@ -317,6 +317,11 @@ def do_homework(request, homework_id):
             return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
         else:
             homework.finished_students.add(request.user)
+            try:
+                HomeworkAnswer.objects.get(homework=homework, creator=request.user)
+                return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})
+            except ObjectDoesNotExist:
+                pass
         homeworkAnswer = HomeworkAnswer(creator=request.user, homework=homework)
         homeworkAnswer.save()
 
@@ -601,6 +606,7 @@ def get_my_homework_todo(request):
 def get_problem_score(homework_answer, judged_score=0):
     """
     获取某次作业的分数
+    :param judged_score: 经过之前测试运行得到的分数
     :param homework_answer: 已提交的作业
     :return: 作业的编程题部分分数
     """
@@ -779,11 +785,16 @@ def judge_homework(homework_answer):
     :param homework_answer:提交的作业
     :return:None
     """
-    for i in range(1000):
+    for i in range(2000):
+        if i == 1000:
+            for solution in homework_answer.solution_set.all():
+                if solution.result in [0, 1, 2, 3]:
+                    solution.result = 0
+                    solution.save()
         for solution in homework_answer.solution_set.all():  # 遍历作业的solution集合
             if solution.result in [0, 1, 2, 3]:  # 当存在solution还在判断中时，重新进行遍历
                 time.sleep(0.1)
-                break
+                break  # 跳出对solution的遍历，重新从头开始遍历
             else:
                 continue
         else:  # 如果全部solution都已判断结束
