@@ -315,6 +315,8 @@ def do_homework(request, homework_id):
     if request.method == 'POST':  # 当提交作业时
         wrong_ids, wrong_info = '', ''
         homework = MyHomework.objects.get(pk=homework_id)
+        if time.mktime(homework.end_time.timetuple()) < time.time():
+            return render(request, 'warning.html', context={'info': '提交时间晚于作业的截止时间，提交失败'})
         if not homework.allow_resubmit:
             if request.user in homework.finished_students.all():  # 防止重复提交
                 return render(request, 'warning.html', context={'info': '您已提交过此题目，请勿重复提交'})

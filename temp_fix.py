@@ -22,6 +22,7 @@ from  work.models import HomeworkAnswer
 from judge.models import SourceCode
 import datetime
 from work.views import judge_homework
+
 for i in HomeworkAnswer.objects.all():
     if not i.judged:
         if (datetime.datetime.now() - i.create_time).seconds > 60:
@@ -31,3 +32,9 @@ for i in HomeworkAnswer.objects.all():
                     j.save()
             judge_homework(i)
             print('judged ' + str(i.id))
+
+from work.models import MyHomework
+
+for i in MyHomework.objects.all():
+    i.allow_resubmit = True
+    i.save()
