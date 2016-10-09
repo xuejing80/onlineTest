@@ -152,7 +152,7 @@ class VmaigPasswordRestForm(forms.Form):
         title = "重置计算机语言作业平台的密码"
         message = "你收到这封信是因为你请求重置你在 网站 %s 上的账户密码\n\n" % site_name + \
                   "请访问该页面并输入新密码:\n\n" + \
-                  protocol + '://' + domain + '/' + '' + 'account/' + 'resetpassword' + '/' + uid + '/' + token + '/' + '  \n\n' + \
+                  protocol + '://' + domain + '/' + '' + 'test/accounts/' + 'resetpassword' + '/' + uid + '/' + token + '/' + '  \n\n' + \
                   "你的用户名，如果已经忘记的话:  %s\n\n" % self.user.username + \
                   "感谢使用!\n\n" + \
                   "南京邮电大学 计算机学院 软件教学中心\n\n\n"
