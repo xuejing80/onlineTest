@@ -287,7 +287,8 @@ def show_homework_result(request, id):
     return render(request, 'homework_result.html',
                   context={'choice_problems': choice_problems, 'problem_score': homework_answer.problem_score,
                            'choice_problem_score': homework_answer.choice_problem_score,
-                           'score': homework_answer.score, 'problems': problems,'title':' {}的"{}"详细'.format(homework_answer.creator.username,homework.name)})
+                           'score': homework_answer.score, 'problems': problems,
+                           'title': ' {}的"{}"详细'.format(homework_answer.creator.username, homework.name)})
 
 
 def get_choice_score(homework_answer):
@@ -383,7 +384,8 @@ def do_homework(request, homework_id):
             if id:
                 problems.append(Problem.objects.get(pk=id))
         return render(request, 'do_homework.html',
-                      context={'homework': homeowork, 'problems': problems, 'choice_problems': choice_problems,'title':homeowork.name})
+                      context={'homework': homeowork, 'problems': problems, 'choice_problems': choice_problems,
+                               'title': homeowork.name})
 
 
 @permission_required('work.add_banji')
@@ -704,9 +706,9 @@ def get_finished_students(request):
     limit = int(request.GET['limit'])
     homework_answers = homework.homeworkanswer_set
     if request.GET['banji_id'] != '0':
-        homework_answers = homework_answers.filter(homework__banji__id=request.GET['banji_id'])
+        homework_answers = homework_answers.filter(creator__banJi_students=BanJi.objects.get(id=request.GET['banji_id']))
     try:
-        homework_answers = homework_answers.filter(homework__name__icontains=request.GET['search'])
+        homework_answers = homework_answers.filter(creator__id_num__icontains=request.GET['search'])
     except:
         pass
     try:

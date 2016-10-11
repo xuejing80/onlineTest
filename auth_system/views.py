@@ -7,11 +7,11 @@ from django.views.generic import View
 from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied
 from django.contrib import auth
-from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_decode
-from .forms import VmaigUserCreationForm, VmaigPasswordRestForm
+from .forms import VmaigUserCreationForm, VmaigPasswordRestForm, PasswordChangeForm
 from .models import MyUser
 import json
 from django.http import HttpResponse, Http404
