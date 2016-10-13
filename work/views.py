@@ -400,6 +400,8 @@ def add_banji(request):
                       end_time=request.POST['end_time'],
                       courser=ClassName.objects.get(pk=request.POST['classname']))
         banji.save()
+        banji.students.add(request.user)
+        banji.save()
         return redirect(reverse('banji_detail', args=(banji.id,)))
     return render(request, 'banji_add.html', context={'classnames': ClassName.objects.all(), 'title': "新建班级"})
 
@@ -979,3 +981,4 @@ def init_homework_data(request):
 
 def file_download(request):
     return render(request, 'file_download.html', context={'title': '教学资源下载'})
+
