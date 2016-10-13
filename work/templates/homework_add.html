@@ -383,12 +383,16 @@
                 var html = '<form class="form-horizontal">';
                 for (var i = 1; i <= score.length; i++) {
                     html += '<div class="panel panel-default">' +
-                            '<div class="panel-body">' +
-                            '<div class="form-group">' +
-                            '<label class="col-sm-2 control-label">测试点' + '<span class="desc">'+descs[i-1]+'</span>' + '</label>' +
-                            '<div class="col-sm-6">' +
-                            '<input type="text" class="form-control" id="info" value="' + infos[i - 1] + '"></div></div>' +
-                            '<div class="form-group"><label class="col-sm-2 control-label">分值</label><div class="col-sm-2"><input type="text" class="form-control" id="score" value="' + score[i - 1] + '"></div></div></div></div>';
+                                    '<input type="hidden" id="desc" value="'+descs[i-1]+'">'+
+                                '<div class="panel-body">' +
+                                    '<div class="form-group">' +
+                                        '<label class="col-sm-2 control-label">测试点' + '<span class="desc">'+descs[i-1]+'</span>' + '</label>' +
+                                        '<div class="col-sm-6">' +
+                                            '<input type="text" class="form-control" id="info" value="' + infos[i - 1] + '">' +
+                                        '</div>' +
+                                    '</div>' +
+                                    '<div class="form-group">' +
+                                        '<label class="col-sm-2 control-label">分值</label><div class="col-sm-2"><input type="text" class="form-control" id="score" value="' + score[i - 1] + '"></div></div></div></div>';
                 }
                 html += "</form>";
                 $('#result_tc').html(html);
@@ -583,7 +587,7 @@
             var testcases = [];
             var totalscore = 0;
             $("#modal_tc").find(".panel").each(function () {
-                var desc = $(this).find("#desc").html();
+                var desc = $(this).find("#desc").val()
                 var info = $(this).find("#info").val();
                 var score = $(this).find("#score").val();
                 totalscore += parseInt(score);
@@ -592,6 +596,7 @@
             var row = $table2.bootstrapTable('getRowByUniqueId', id);
             row.total_score = totalscore;
             row.testcases = testcases;
+            console.log(row.testcases)
             $table2.bootstrapTable('updateByUniqueId', {
                 id: id,
                 row: row

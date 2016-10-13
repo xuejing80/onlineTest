@@ -77,7 +77,7 @@ class UserControl(View):
             auth.logout(request)
             return HttpResponse('OK')
 
-    def register(self, request):
+    def register(self, request: object) -> object:
         username = self.request.POST.get("username", "")
         password1 = self.request.POST.get("password1", "")
         id_num = self.request.POST.get('id_num', "")

@@ -641,8 +641,8 @@ def get_problem_score(homework_answer, judged_score=0):
                 if json.loads(solution.oi_info)[str(case['desc']) + '.in']['result'] == 4:  # 参照测试点，依次加测试点分数
                     score += int(case['score'])
         except Exception as e:
-            print("error on get problem score！solution_id: %d ,error : %s args: %s" % (
-                info['id'], e, e.args.__str__()))
+            print("error on get problem score！homework_id: %d ,error : %s args: %s" % (
+                homework.pk, e, e.args.__str__()))
     return score
 
 

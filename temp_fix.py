@@ -18,20 +18,17 @@ for i in MyHomework.objects.all():
         if not (j.creator in i.finished_students.all()):
             print(str(j.creator.id_num) + ' ' + str(i.id))
 
-from  work.models import HomeworkAnswer
-from judge.models import SourceCode
+from  work.models import HomeworkAnswer, MyHomework
 import datetime
 from work.views import judge_homework
 
-for i in HomeworkAnswer.objects.all():
-    if not i.judged:
-        if (datetime.datetime.now() - i.create_time).seconds > 60:
-            for j in i.solution_set.all():
-                if j.result in [0, 1, 2, 3]:
-                    j.result = 0
-                    j.save()
-            judge_homework(i)
-            print('judged ' + str(i.id))
+for i in MyHomework.objects.get(id=183).homeworkanswer_set.all():
+    if (datetime.datetime.now() - i.create_time).seconds > 60:
+        for j in i.solution_set.all():
+            if j.result in [0, 1, 2, 3]:
+                continue
+        judge_homework(i)
+        print('judged ' + str(i.id))
 
 from work.models import MyHomework
 
