@@ -581,7 +581,8 @@ def assign_homework(request):
 # 显示我的待做作业
 @login_required()
 def list_do_homework(request):
-    return render(request, 'do_homework_list.html', context={'classnames': ClassName.objects.all(), 'title': '尚未完成的作业'})
+    banjis =BanJi.objects.filter(students=request.user).all()
+    return render(request, 'do_homework_list.html', context={'banjis': banjis, 'title': '尚未完成的作业'})
 
 
 # 获取待做作业列表
@@ -592,10 +593,10 @@ def get_my_homework_todo(request):
     recodes = []
     offset = int(request.GET['offset'])
     limit = int(request.GET['limit'])
-    classname = request.GET['classname']
+    banji = request.GET['banji']
     homeworks = MyHomework.objects.filter(banji__students=user)
-    if classname != '0':
-        homeworks = homeworks.filter(courser__id=classname)
+    if banji != '0':
+        homeworks = homeworks.filter(banji__id=banji)
     try:
         homeworks = homeworks.filter(name__icontains=request.GET['search'])
     except:
@@ -981,4 +982,34 @@ def init_homework_data(request):
 
 def file_download(request):
     return render(request, 'file_download.html', context={'title': '教学资源下载'})
+
+
+# def list_depl_homeworks(request):
+#     return render(request,'depl_homework_list.html')
+#
+# def get_depl_homeworks(request):
+#     json_data = {}
+#     recodes = []
+#     offset = int(request.GET['offset'])
+#     limit = int(request.GET['limit'])
+#     homeworks = MyHomework.objects.filter(creater=request.user).filter(banjis)
+#     try:
+#         homeworks = homeworks.filter(name__icontains=request.GET['search'])
+#     except:
+#         pass
+#     try:
+#         sort = request.GET['sort']
+#     except MultiValueDictKeyError:
+#         sort = 'pk'
+#     json_data['total'] = homeworks.count()
+#     if request.GET['order'] == 'desc':
+#         sort = '-' + sort
+#     for homework in homeworks.all().order_by(sort)[offset:offset + limit]:
+#         recode = {'name': homework.name, 'pk': homework.pk,
+#                   'courser': homework.courser.name, 'id': homework.pk,
+#                   'start_time': homework.start_time.strftime('%Y-%m-%d %H:%M:%S'),
+#                   'end_time': homework.end_time.strftime('%Y-%m-%d %H:%M:%S')}
+#         recodes.append(recode)
+#     json_data['rows'] = recodes
+#     return HttpResponse(json.dumps(json_data))
 

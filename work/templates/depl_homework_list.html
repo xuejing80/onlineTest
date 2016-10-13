@@ -10,16 +10,10 @@
     <ol class="breadcrumb">
         <li><a href="{% url 'index' %}">主页</a></li>
         <li class="active">作业管理</li>
-        <li class="active">我的作业列表</li>
+        <li class="active">我布置的作业</li>
     </ol>
-    <h1>我的作业列表</h1>
-    <h4>请到公共作业处复制作业至此，此处作业与公共作业完全独立，您可以编辑而不影响公共作业的内容</h4>
-    <div class="btn-group">
-        <button type="button" id="remove" class="btn btn-danger"><i class="glyphicon glyphicon-remove">删除选中</i></button>
-
-        <a class="btn btn-primary btn-l" href="{% url 'add_myhomework' %}" role="button"><i
-                class="glyphicon glyphicon-plus">新建私有作业</i></a>
-    </div>
+    <h1>我布置作业列表</h1>
+    <h4>此处的作业为已经布置到班级中的作业</h4>
     <div id="toolbar">
         <div class="form-inline" role="form">
             <div class="form-group">

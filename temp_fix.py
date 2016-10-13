@@ -22,7 +22,7 @@ from  work.models import HomeworkAnswer, MyHomework
 import datetime
 from work.views import judge_homework
 
-for i in MyHomework.objects.get(id=183).homeworkanswer_set.all():
+for i in MyHomework.objects.get(id=190).homeworkanswer_set.all():
     if (datetime.datetime.now() - i.create_time).seconds > 60:
         for j in i.solution_set.all():
             if j.result in [0, 1, 2, 3]:
