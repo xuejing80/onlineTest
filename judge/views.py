@@ -205,14 +205,15 @@ def update_choice_problem(request, id):
 @permission_required('judge.add_problem')
 def list_problems(request):
     classnames = ClassName.objects.all()
-    return render(request, 'problem_list.html', context={'classnames': classnames, 'title': '编程题题库'})
+    return render(request, 'problem_list.html',
+                  context={'classnames': classnames, 'title': '编程题题库', 'position': 'biancheng_list'})
 
 
 # 选择题列表
 @permission_required('judge.add_choiceproblem')
 def list_choices(request):
     classnames = ClassName.objects.all()
-    return render(request, 'choice_problem_list.html', context={'classnames': classnames, 'title': '选择题题库'})
+    return render(request, 'choice_problem_list.html', context={'classnames': classnames, 'title': '选择题题库','position':'choice_list'})
 
 
 # 返回含有问题数据的json

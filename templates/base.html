@@ -105,53 +105,53 @@
                 <p class="centered"><a href="{% url 'index' %}"></a></p>
                 <h5 class="centered">计算机语言作业平台</h5>
 
-                <li class="mt">
-                    <a href="{% url 'index' %}">
+                <li class="mt active">
+                    <a href="{% url 'index' %}" id="index">
                         <i class="fa fa-dashboard"></i>
                         <span>主页</span>
                     </a>
                 </li>
                 <li class="mt" style="margin-top: 0">
-                    <a href="{% url 'download' %}">
+                    <a href="{% url 'download' %}" id="source">
                         <i class="fa fa-cloud-download" aria-hidden="true"></i>
 
                         <span>教学资源</span>
                     </a>
                 </li>
                 {% if user.is_authenticated %}
-                    <li><a href="{% url 'list_do_homework' %}">未完成作业</a></li>
-                    <li><a href="{% url 'list_finished_homework' %}">查看作业结果</a></li>
+                    <li ><a href="{% url 'list_do_homework' %}" id="unfinished">未完成作业</a></li>
+                    <li ><a href="{% url 'list_finished_homework' %}" id="finished">查看作业结果</a></li>
                     {% if 'judge.add_problem' in perms %}
                         <li class="sub-menu">
-                            <a href="javascript:;">
+                            <a href="javascript:;" id="problem_list">
                                 <i class="fa fa-table" aria-hidden="true"></i>
                                 <span>题库管理</span>
                             </a>
-                            <ul class="sub">
-                                <li><a href="{% url 'problemlist' %}">编程题题库</a></li>
-                                <li><a href="{% url 'choice_problem_list' %}">选择题题库</a></li>
+                            <ul class="sub" id="extend_problem_list">
+                                <li  id="biancheng_list"> <a href="{% url 'problemlist' %}">编程题题库</a></li>
+                                <li  id="choice_list"><a href="{% url 'choice_problem_list' %}" id="biancheng_list">选择题题库</a></li>
                             </ul>
                         </li>
                     {% endif %}
                     {% if 'work.add_homework' in perms %}
                         <li class="sub-menu">
-                            <a href="javascript:;">
+                            <a href="javascript:;" id="manage">
                                 <i class="fa fa-cogs"></i>
                                 <span>课程与班级</span>
                             </a>
-                            <ul class="sub">
-                                <li><a href="{% url 'list_coursers' %}">课程管理</a></li>
-                                <li><a href="{% url 'banji_list' %}">班级管理</a></li>
+                            <ul class="sub" id="extend_manage">
+                                <li id="courser_manage"><a href="{% url 'list_coursers' %}">课程管理</a></li>
+                                <li id="banji_manage"><a href="{% url 'banji_list' %}">班级管理</a></li>
                             </ul>
                         </li>
                         <li class="sub-menu">
-                            <a href="javascript:;">
+                            <a href="javascript:;" id="work_manege">
                                 <i class="fa fa-book"></i>
                                 <span>作业管理</span>
                             </a>
-                            <ul class="sub">
-                                <li><a href="{% url 'homework_list' %}">公共作业管理</a></li>
-                                <li><a href="{% url 'my_homework_list' %}">我的私有作业管理</a></li>
+                            <ul class="sub" id="extend_work_manage">
+                                <li id="public_work_manage"><a href="{% url 'homework_list' %}">公共作业管理</a></li>
+                                <li id="private_work_manage"><a href="{% url 'my_homework_list' %}">我的私有作业管理</a></li>
                             </ul>
                         </li>
                     {% endif %}
@@ -248,6 +248,52 @@
         });
         return false;
     });
+    $(function () {
+        var position = "{{ position }}"
+        switch (position) {
+            case 'biancheng_list':$("#biancheng_list").addClass("active");
+                $("#problem_list").addClass("active");
+                $("#extend_problem_list").css('display','block');
+                break
+            case 'choice_list':
+                $("#choice_list").addClass("active");
+                $("#problem_list").addClass('active');
+                    $("#extend_problem_list").css('display','block')
+                break;
+            case 'index':
+                $("#index").addClass("active");
+                break;
+            case 'source':
+                $("#source").addClass("active");
+                break;
+            case 'unfinished':
+                $("#unfinished").addClass("active");
+                break;
+            case 'finished':
+                $("#finished").addClass("active");
+                break;
+            case 'courser_manage':
+                $("#courser_manage").addClass('active');
+                $("#manage").addClass("active");
+                    $("#extend_manage").css('display','block');
+                break;
+            case 'banji_manage':
+                $("#banji_manage").addClass("active");
+                    $("#extend_manage").css("display",'block');
+                $("#manage").addClass("active");
+                break;
+            case 'public_work_manage':
+                $("#public_work_manage").addClass("active");
+                $("#extend_work_manage").css("display",'block');
+                $("#work_manege").addClass("active");
+                break;
+            case 'private_work_manage':
+                $("#private_work_manage").addClass("active");
+                $("#extend_work_manage").css("display",'block');
+                $("#work_manege").addClass("active");
+        }
+
+    })
 </script>
 
 </body>

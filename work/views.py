@@ -109,7 +109,7 @@ def list_homework(request):
     :param request:
     :return:含有班级列表的页面
     """
-    context = {'classnames': ClassName.objects.all()}
+    context = {'classnames': ClassName.objects.all(), 'position': 'public_work_manage'}
     return render(request, 'homework_list.html', context=context)
 
 
@@ -426,7 +426,7 @@ def list_banji(request):
     :return: 班级列表页面
     """
     classnames = ClassName.objects.all()
-    context = {'classnames': classnames, 'title': '班级列表'}
+    context = {'classnames': classnames, 'title': '班级列表', 'position': 'banji_manage'}
     return render(request, 'banji_list.html', context=context)
 
 
@@ -524,7 +524,7 @@ def copy_to_my_homework(request):
 @permission_required('work.add_homework')
 def list_my_homework(request):
     classnames = ClassName.objects.all()
-    context = {'classnames': classnames, 'title': '我的私有作业列表'}
+    context = {'classnames': classnames, 'title': '我的私有作业列表', 'position': 'private_work_manage'}
     return render(request, 'my_homework_list.html', context=context)
 
 
@@ -581,8 +581,9 @@ def assign_homework(request):
 # 显示我的待做作业
 @login_required()
 def list_do_homework(request):
-    banjis =BanJi.objects.filter(students=request.user).all()
-    return render(request, 'do_homework_list.html', context={'banjis': banjis, 'title': '尚未完成的作业'})
+    banjis = BanJi.objects.filter(students=request.user).all()
+    return render(request, 'do_homework_list.html',
+                  context={'banjis': banjis, 'title': '尚未完成的作业', 'position': 'unfinished'})
 
 
 # 获取待做作业列表
@@ -652,7 +653,7 @@ def get_problem_score(homework_answer, judged_score=0):
 @login_required()
 def list_finished_homework(request):
     return render(request, 'finidshed_homework_list.html',
-                  context={'classnames': ClassName.objects.all(), 'title': '已经完成的作业'})
+                  context={'classnames': ClassName.objects.all(), 'position': 'finished', 'title': '已经完成的作业'})
 
 
 @login_required()
@@ -709,7 +710,8 @@ def get_finished_students(request):
     limit = int(request.GET['limit'])
     homework_answers = homework.homeworkanswer_set
     if request.GET['banji_id'] != '0':
-        homework_answers = homework_answers.filter(creator__banJi_students=BanJi.objects.get(id=request.GET['banji_id']))
+        homework_answers = homework_answers.filter(
+            creator__banJi_students=BanJi.objects.get(id=request.GET['banji_id']))
     try:
         homework_answers = homework_answers.filter(creator__id_num__icontains=request.GET['search'])
     except:
@@ -743,7 +745,7 @@ def list_coursers(request):
     列出课程
     """
     coursers = ClassName.objects.all()
-    return render(request, 'courser_list.html', {'coursers': coursers, 'title': '课程列表'})
+    return render(request, 'courser_list.html', {'coursers': coursers, 'title': '课程列表', 'position': 'courser_manage'})
 
 
 @permission_required('work.add_knowledgepoint1')
@@ -981,8 +983,7 @@ def init_homework_data(request):
 
 
 def file_download(request):
-    return render(request, 'file_download.html', context={'title': '教学资源下载'})
-
+    return render(request, 'file_download.html', context={'title': '教学资源下载', 'position': 'source'})
 
 # def list_depl_homeworks(request):
 #     return render(request,'depl_homework_list.html')
@@ -1012,4 +1013,3 @@ def file_download(request):
 #         recodes.append(recode)
 #     json_data['rows'] = recodes
 #     return HttpResponse(json.dumps(json_data))
-
