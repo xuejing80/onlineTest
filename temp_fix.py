@@ -1,3 +1,5 @@
+import json
+
 from work.models import HomeworkAnswer
 from work.views import judge_homework
 
@@ -22,7 +24,7 @@ from  work.models import HomeworkAnswer, MyHomework
 import datetime
 from work.views import judge_homework
 
-for i in MyHomework.objects.get(id=190).homeworkanswer_set.all():
+for i in MyHomework.objects.get(id=198).homeworkanswer_set.all():
     if (datetime.datetime.now() - i.create_time).seconds > 60:
         for j in i.solution_set.all():
             if j.result in [0, 1, 2, 3]:
@@ -30,8 +32,17 @@ for i in MyHomework.objects.get(id=190).homeworkanswer_set.all():
         judge_homework(i)
         print('judged ' + str(i.id))
 
+
+
 from work.models import MyHomework
 
 for i in MyHomework.objects.all():
-    i.allow_resubmit = True
-    i.save()
+    info = json.loads(i.problem_info)
+    for j in info:
+        testcases = j['testcases']
+        for x in testcases:
+            try:
+                k = x['desc']
+            except KeyError:
+                print(i)
+

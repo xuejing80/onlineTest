@@ -88,7 +88,7 @@ def get_json_work(request):
     try:
         sort = request.GET['sort']
     except MultiValueDictKeyError:
-        sort = 'pk'
+        sort = '-start_time'
     json_data['total'] = homeworks.count()
     if request.GET['order'] == 'desc':
         sort = '-' + sort

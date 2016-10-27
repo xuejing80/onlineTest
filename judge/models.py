@@ -49,7 +49,7 @@ class KnowledgePoint2(models.Model):
 
 class ChoiceProblem(models.Model):
     id = models.AutoField('选择题ID', primary_key=True)
-    title = models.CharField(max_length=200)
+    title = models.TextField(max_length=200)
     a = models.CharField(max_length=50)
     b = models.CharField(max_length=50)
     c = models.CharField(max_length=50)

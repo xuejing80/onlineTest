@@ -121,6 +121,29 @@
         <button type="button" class="btn btn-danger" id="remove2">
             移除所选项
         </button>
+        <div class="btn-group">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                批量修改选择题分数
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                <li><a href="javascript:void(0)" onclick="quick_change_score(1)">每题1分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(2)">每题2分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(3)">每题3分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(4)">每题4分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(5)">每题5分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(6)">每题6分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(7)">每题7分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(8)">每题8分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(9)">每题9分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(10)">每题10分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(11)">每题11分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(12)">每题12分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(13)">每题13分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(14)">每题14分</a></li>
+                <li><a href="javascript:void(0)" onclick="quick_change_score(15)">每题15分</a></li>
+            </ul>
+        </div>
     </div>
     </p>
 
@@ -383,16 +406,16 @@
                 var html = '<form class="form-horizontal">';
                 for (var i = 1; i <= score.length; i++) {
                     html += '<div class="panel panel-default">' +
-                                    '<input type="hidden" id="desc" value="'+descs[i-1]+'">'+
-                                '<div class="panel-body">' +
-                                    '<div class="form-group">' +
-                                        '<label class="col-sm-2 control-label">测试点' + '<span class="desc">'+descs[i-1]+'</span>' + '</label>' +
-                                        '<div class="col-sm-6">' +
-                                            '<input type="text" class="form-control" id="info" value="' + infos[i - 1] + '">' +
-                                        '</div>' +
-                                    '</div>' +
-                                    '<div class="form-group">' +
-                                        '<label class="col-sm-2 control-label">分值</label><div class="col-sm-2"><input type="text" class="form-control" id="score" value="' + score[i - 1] + '"></div></div></div></div>';
+                            '<input type="hidden" id="desc" value="' + descs[i - 1] + '">' +
+                            '<div class="panel-body">' +
+                            '<div class="form-group">' +
+                            '<label class="col-sm-2 control-label">测试点' + '<span class="desc">' + descs[i - 1] + '</span>' + '</label>' +
+                            '<div class="col-sm-6">' +
+                            '<input type="text" class="form-control" id="info" value="' + infos[i - 1] + '">' +
+                            '</div>' +
+                            '</div>' +
+                            '<div class="form-group">' +
+                            '<label class="col-sm-2 control-label">分值</label><div class="col-sm-2"><input type="text" class="form-control" id="score" value="' + score[i - 1] + '"></div></div></div></div>';
                 }
                 html += "</form>";
                 $('#result_tc').html(html);
@@ -591,7 +614,7 @@
                 var info = $(this).find("#info").val();
                 var score = $(this).find("#score").val();
                 totalscore += parseInt(score);
-                testcases.push({'info': info, 'score': score,'desc':desc })
+                testcases.push({'info': info, 'score': score, 'desc': desc})
             });
             var row = $table2.bootstrapTable('getRowByUniqueId', id);
             row.total_score = totalscore;
@@ -612,7 +635,7 @@
                             $('#datetimepicker1').data("DateTimePicker").date('{{ start_time }}');
                             $('#datetimepicker2').data("DateTimePicker").date('{{ end_time }}');
                             $("#classname option[value='{{ courser_id }}']").attr("selected", true);
-                            $('#allow_resubmit[value="{{ allow_resubmit }}"]').attr('checked',true);
+                            $('#allow_resubmit[value="{{ allow_resubmit }}"]').attr('checked', true);
                             data = window.location.pathname.split('-').pop();
                             $.ajax({
                                 type: "post",
@@ -672,5 +695,13 @@
             $("#score").html(parseInt($('#choice_score').text()) + parseInt($('#problem_score').text()));
         }
 
+        function quick_change_score(score) {
+            $.each($table4.bootstrapTable('getData'), function (i, item) {
+                if (item.total_score) {
+                    item.total_score=score;
+                    $table4.bootstrapTable('updateByUniqueId', {id: item.id, row: item});
+                }
+            });
+        }
     </script>
 {% endblock %}
