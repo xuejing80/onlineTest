@@ -352,7 +352,8 @@ def verify_file(request):
         score_filename = filename + '_files/' + "scores.txt"
         for root, dirs, files in os.walk(filename + '_files/'):  # 去除文件BOM头
             for f in files:
-                remove_bom(filename + '_files/' + f)
+                if not f.startswith('._'):
+                    remove_bom(filename + '_files/' + f)
         with open(score_filename, 'rb') as f:
             data = f.read().decode('utf-8')
             lines = data.splitlines()
@@ -369,10 +370,11 @@ def verify_file(request):
             json.dumps({'result': 0, 'info': 'scores.txt文件不符合规范，请注意文件最后不要多余空行，并且文件均为UTF8编码' + e.__str__()}))
     for parentdir, dirname, filenames in os.walk(filename + '_files/'):
         for filename in filenames:
-            if os.path.splitext(filename)[1] == '.in':
-                in_count += 1
-            elif os.path.splitext(filename)[1] == '.out':
-                out_count += 1
+            if not filename.startswith("._"):
+                if os.path.splitext(filename)[1] == '.in':
+                    in_count += 1
+                elif os.path.splitext(filename)[1] == '.out':
+                    out_count += 1
     if in_count != count:
         shutil.rmtree(tempdir)
         return HttpResponse(json.dumps({'result': 0, 'info': '.in文件数量与scores.txt中的评分项目不符'}))

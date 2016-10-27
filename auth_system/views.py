@@ -1,5 +1,5 @@
 # coding:utf-8
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, AbstractUser
 from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
 from django.utils.datastructures import MultiValueDictKeyError
@@ -261,3 +261,4 @@ def update_user(request, pk):
     groups = Group.objects.all()
     return render(request, 'update_user.html',
                   context={'user': user, 'groups': groups, 'current_group_id': current_group_id})
+
