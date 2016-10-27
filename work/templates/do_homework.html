@@ -25,7 +25,7 @@
                                href="#collapse{{ choice_problem.detail.id }}"
                                aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}"
                                aria-controls="collapse{{ choice_problem.detail.id }}">
-                                {{ forloop.counter }}. ({{ choice_problem.score }}分) {{ choice_problem.detail.title }}
+                                <pre>{{ forloop.counter }}. ({{ choice_problem.score }}分) {{ choice_problem.detail.title }}</pre>
                             </a>
                         </h4>
                     </div>

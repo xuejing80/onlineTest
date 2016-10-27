@@ -20,10 +20,11 @@ class VmaigUserCreationForm(forms.ModelForm):
     # 错误信息
     error_messages = {
         'duplicate_username': u"此用户已存在.",
-        'password_mismatch': u"两次密码不相等.",
+        'password_mismatch': u"两次密码不相同.",
         'duplicate_email': u'此email已经存在.',
         'duplicate_id_num': '用户名/学号/工号已经注册',
-        'unsuitable_length': "密码长度应该在8到16位"
+        'unsuitable_length': "密码长度应该在8到16位",
+        'all_number': "密码不能全部是数字",
     }
 
     username = forms.RegexField(max_length=30, regex=r'^[\w.@+-]+$',
@@ -69,6 +70,10 @@ class VmaigUserCreationForm(forms.ModelForm):
         if len(password1) < 8 or len(password1) > 16:
             raise forms.ValidationError(
                 self.error_messages["unsuitable_length"]
+            )
+        if password1.isdigit():
+            raise forms.ValidationError(
+                self.error_messages['all_number']
             )
         password2 = self.cleaned_data.get("password2")
         if password1 and password2 and password1 != password2:
@@ -147,7 +152,7 @@ class VmaigPasswordRestForm(forms.Form):
         title = "重置计算机语言作业平台的密码"
         message = "你收到这封信是因为你请求重置你在 网站 %s 上的账户密码\n\n" % site_name + \
                   "请访问该页面并输入新密码:\n\n" + \
-                  protocol + '://' + domain + '/' + '' + 'account/' + 'resetpassword' + '/' + uid + '/' + token + '/' + '  \n\n' + \
+                  protocol + '://' + domain + '/' + '' + 'test/accounts/' + 'resetpassword' + '/' + uid + '/' + token + '/' + '  \n\n' + \
                   "你的用户名，如果已经忘记的话:  %s\n\n" % self.user.username + \
                   "感谢使用!\n\n" + \
                   "南京邮电大学 计算机学院 软件教学中心\n\n\n"
@@ -156,3 +161,73 @@ class VmaigPasswordRestForm(forms.Form):
             send_mail(title, message, from_email, [self.user.email])
         except Exception as e:
             logger.error(u'[UserControl]用户重置密码邮件发送失败:[%s]' % (email))
+
+
+class PasswordChangeForm(forms.Form):
+    """
+    A form that lets a user change their password by entering their old
+    password.
+    """
+
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super(PasswordChangeForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        password = self.cleaned_data["new_password1"]
+        self.user.set_password(password)
+        if commit:
+            self.user.save()
+        return self.user
+
+    error_messages = {
+        'all_number': "密码不能全部是数字",
+        'unsuitable_length': "密码长度应该在8到16位",
+        'password_mismatch': u"两次密码不相同.",
+        'password_incorrect': '原密码不正确'
+    }
+    old_password = forms.CharField(
+        strip=False,
+        widget=forms.PasswordInput, error_messages={
+            'required': '原密码未填'
+        })
+
+    new_password1 = forms.CharField(widget=forms.PasswordInput,
+                                    error_messages={
+                                        'required': u"新密码未填",
+                                        'invalid': "密码只能包含字母、数字和字符@/./+/-/_，长度8到16位"
+                                    })
+    new_password2 = forms.CharField(widget=forms.PasswordInput,
+                                    error_messages={
+                                        'required': u"确认密码未填"
+                                    })
+    field_order = ['old_password', 'new_password1', 'new_password2']
+
+    def clean_old_password(self):
+        """
+        Validates that the old_password field is correct.
+        """
+        old_password = self.cleaned_data["old_password"]
+        if not self.user.check_password(old_password):
+            raise forms.ValidationError(
+                self.error_messages['password_incorrect'],
+                code='password_incorrect',
+            )
+        return old_password
+
+    def clean_new_password2(self):
+        password1 = self.cleaned_data.get("new_password1")
+        if len(password1) < 8 or len(password1) > 16:
+            raise forms.ValidationError(
+                self.error_messages["unsuitable_length"]
+            )
+        if password1.isdigit():
+            raise forms.ValidationError(
+                self.error_messages['all_number']
+            )
+        password2 = self.cleaned_data.get("new_password2")
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError(
+                self.error_messages["password_mismatch"]
+            )
+        return password2

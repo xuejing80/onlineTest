@@ -1,5 +1,5 @@
 # coding:utf-8
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, AbstractUser
 from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
 from django.utils.datastructures import MultiValueDictKeyError
@@ -7,11 +7,11 @@ from django.views.generic import View
 from django.core.mail import send_mail
 from django.core.exceptions import PermissionDenied
 from django.contrib import auth
-from django.contrib.auth.forms import PasswordChangeForm, SetPasswordForm
+from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_decode
-from .forms import VmaigUserCreationForm, VmaigPasswordRestForm
+from .forms import VmaigUserCreationForm, VmaigPasswordRestForm, PasswordChangeForm
 from .models import MyUser
 import json
 from django.http import HttpResponse, Http404
@@ -77,7 +77,7 @@ class UserControl(View):
             auth.logout(request)
             return HttpResponse('OK')
 
-    def register(self, request):
+    def register(self, request: object) -> object:
         username = self.request.POST.get("username", "")
         password1 = self.request.POST.get("password1", "")
         id_num = self.request.POST.get('id_num', "")
@@ -261,3 +261,4 @@ def update_user(request, pk):
     groups = Group.objects.all()
     return render(request, 'update_user.html',
                   context={'user': user, 'groups': groups, 'current_group_id': current_group_id})
+
