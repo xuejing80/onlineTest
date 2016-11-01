@@ -1,5 +1,5 @@
 # coding:utf-8
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, AbstractUser
 from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
 from django.utils.datastructures import MultiValueDictKeyError
@@ -77,7 +77,7 @@ class UserControl(View):
             auth.logout(request)
             return HttpResponse('OK')
 
-    def register(self, request):
+    def register(self, request: object) -> object:
         username = self.request.POST.get("username", "")
         password1 = self.request.POST.get("password1", "")
         id_num = self.request.POST.get('id_num', "")
@@ -261,3 +261,4 @@ def update_user(request, pk):
     groups = Group.objects.all()
     return render(request, 'update_user.html',
                   context={'user': user, 'groups': groups, 'current_group_id': current_group_id})
+

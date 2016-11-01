@@ -65,10 +65,11 @@ class MyUser(AbstractBaseUser, PermissionsMixin):
         return self.username
 
     def __str__(self):  # __unicode__ on Python 2
-        return self.email
+        return self.username
 
     @property
     def is_staff(self):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+

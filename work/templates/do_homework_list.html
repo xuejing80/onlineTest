@@ -16,10 +16,10 @@
     <div id="toolbar">
         <div class="form-inline" role="form">
             <div class="form-group">
-                <select class="form-control" id="classname" name="classname">
-                    <option value="0" selected="selected">全部课程</option>
-                    {% for classname in classnames %}
-                        <option value="{{ classname.pk }}">{{ classname.name }}</option>
+                <select class="form-control" id="classname" name="banji">
+                    <option value="0" selected="selected">全部班级</option>
+                    {% for banji in banjis %}
+                        <option value="{{ banji.pk }}">{{ banji.name }}</option>
                     {% endfor %}
                 </select>
             </div>
