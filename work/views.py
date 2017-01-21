@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
-
+from django.utils import timezone
 from auth_system.models import MyUser
 from judge.models import ClassName, Problem, ChoiceProblem, Solution, SourceCode, SourceCodeUser, KnowledgePoint1, \
     KnowledgePoint2, Compileinfo
@@ -334,7 +334,6 @@ def do_homework(request, homework_id):
                 homeworkAnswer = HomeworkAnswer.objects.get(creator=request.user, homework=homework)
                 for solution in homeworkAnswer.solution_set.all():
                     SourceCode.objects.get(solution_id=solution.solution_id).delete()
-                    SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
                     solution.delete()
                 homeworkAnswer.judged = False
             except ObjectDoesNotExist:
@@ -359,8 +358,6 @@ def do_homework(request, homework_id):
                 homeworkAnswer.solution_set.add(solution)
                 source_code = SourceCode(solution_id=solution.solution_id, source=code)
                 source_code.save()
-                source_code_user = SourceCodeUser(solution_id=solution.solution_id, source=code)
-                source_code_user.save()
         homeworkAnswer.wrong_choice_problems = wrong_ids
         homeworkAnswer.wrong_choice_problems_info = wrong_info
         homeworkAnswer.save()
@@ -595,6 +592,7 @@ def get_my_homework_todo(request):
     offset = int(request.GET['offset'])
     limit = int(request.GET['limit'])
     banji = request.GET['banji']
+    count = 0
     homeworks = MyHomework.objects.filter(banji__students=user)
     if banji != '0':
         homeworks = homeworks.filter(banji__id=banji)
@@ -606,22 +604,19 @@ def get_my_homework_todo(request):
         sort = request.GET['sort']
     except MultiValueDictKeyError:
         sort = 'pk'
-    count = 0
-
     if request.GET['order'] == 'desc':
         sort = '-' + sort
-    for homework in homeworks.all().order_by(sort)[offset:offset + limit]:
-
-        if request.user not in homework.finished_students.all() and time.mktime(
-                homework.start_time.timetuple()) < time.time() < time.mktime(homework.end_time.timetuple()):
+    for homework in homeworks.all().order_by(sort):
+        if (request.user not in homework.finished_students.all()) and (homework.start_time < timezone.now() < homework.end_time):
             recode = {'name': homework.name, 'pk': homework.pk,
                       'courser': homework.courser.name, 'id': homework.pk,
                       'start_time': homework.start_time.strftime('%Y-%m-%d %H:%M:%S'),
                       'end_time': homework.end_time.strftime('%Y-%m-%d %H:%M:%S')}
             recodes.append(recode)
             count += 1
-    json_data['rows'] = recodes
+    json_data['rows'] = recodes[offset:offset + limit]
     json_data['total'] = count
+    json_data['xxx'] = homeworks.count()
     return JsonResponse(json_data)
 
 
@@ -684,9 +679,7 @@ def get_finished_homework(request):
     if request.GET['order'] == 'desc':
         sort = '-' + sort
     for homework_answer in homework_answers.all().order_by(sort)[offset:offset + limit]:
-        score = '%d/%d' % (homework_answer.score,
-                           homework_answer.homework.total_score) if homework_answer.judged else \
-            '<i class="fa fa-spinner fa-spin fa-fw"></i> 作业还在判分中'
+        score = '{}'.format(homework_answer.score) if homework_answer.judged else '<i class="fa fa-spinner fa-spin fa-fw"></i> 作业还在判分中'
         recode = {'name': homework_answer.homework.name,
                   'create_time': homework_answer.create_time.strftime('%Y-%m-%d %H:%M:%S'),
                   'id': homework_answer.pk,
@@ -725,9 +718,7 @@ def get_finished_students(request):
     if request.GET['order'] == 'desc':
         sort = '-' + sort
     for homework_answer in homework_answers.all().order_by(sort)[offset:offset + limit]:
-        score = '%d/%d' % (
-            homework_answer.score, homework_answer.homework.total_score) if homework_answer.judged else \
-            '<i class="fa fa-spinner fa-spin fa-fw"></i> 作业还在判分中'
+        score = '{}'.format(homework_answer.score) if homework_answer.judged else '<i class="fa fa-spinner fa-spin fa-fw"></i> 作业还在判分中'
         recode = {'id_num': homework_answer.creator.id_num,
                   'username': homework_answer.creator.username,
                   'create_time': homework_answer.create_time.strftime('%Y-%m-%d %H:%M:%S'), 'id': homework_answer.id,
@@ -873,9 +864,7 @@ def test_run(request):
                                 code_length=len(request.POST['code']))  # 创建判题的solutioon
             solution.save()
             source_code = SourceCode(solution_id=solution.solution_id, source=request.POST['code'])
-            source_code_user = SourceCodeUser(solution_id=solution.solution_id, source=request.POST['code'])
             source_code.save()
-            source_code_user.save()
             return HttpResponse(
                 json.dumps({'result': 1, 'solution_id': solution.solution_id}))  # 创建成功，返回solutioon_id
         except Exception as e:
@@ -887,7 +876,6 @@ def test_run(request):
         if solution.result in [0, 1, 2, 3]:  # 当题目还在判断中时
             return HttpResponse(json.dumps({'status': 0, 'info': '题目正在判断中', 'score': 0}))
         if solution.result == 11:  # 当出现编译错误时
-            SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
             SourceCode.objects.get(solution_id=solution.solution_id).delete()
             solution.delete()
             try:
@@ -912,7 +900,6 @@ def test_run(request):
                         else:
                             wrong_num += 1
                             result = 1
-            SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
             SourceCode.objects.get(solution_id=solution.solution_id).delete()
             solution.delete()
             return JsonResponse({'status': 1, 'result': result,
@@ -935,7 +922,6 @@ def delete_homeworkanswer(request, id):
     homeworkanswer.homework.finished_students.remove(homeworkanswer.creator)
     for solution in homeworkanswer.solution_set.all():
         SourceCode.objects.get(solution_id=solution.solution_id).delete()
-        SourceCodeUser.objects.get(solution_id=solution.solution_id).delete()
         solution.delete()
     homeworkanswer.delete()
     return redirect(reverse('my_homework_detail', kwargs={'pk': homwork_id}))

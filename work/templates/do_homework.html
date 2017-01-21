@@ -38,14 +38,14 @@
                                     <label class="checkbox-inline">
                                         <input type="radio" id="selection-{{ choice_problem.detail.id }}" value="a"
                                                name="selection-{{ choice_problem.detail.id }}">
-                                        A.{{ choice_problem.detail.a }}
+                                        A.{{ choice_problem.detail.a|safe }}
                                     </label>
                                 </div>
                                 <div class="col-lg-6 col-md-6 ">
                                     <label class="checkbox-inline">
                                         <input type="radio" id="selection-{{ choice_problem.detail.id }}" value="b"
                                                name="selection-{{ choice_problem.detail.id }}">
-                                        B.{{ choice_problem.detail.b }}
+                                        B.{{ choice_problem.detail.b|safe }}
                                     </label>
                                 </div>
                             </div>
@@ -54,14 +54,14 @@
                                     <label class="checkbox-inline">
                                         <input type="radio" id="selection-{{ choice_problem.detail.id }}" value="c"
                                                name="selection-{{ choice_problem.detail.id }}">
-                                        C.{{ choice_problem.detail.c }}
+                                        C.{{ choice_problem.detail.c|safe }}
                                     </label>
                                 </div>
                                 <div class="col-lg-6 col-md-6">
                                     <label class="checkbox-inline">
                                         <input type="radio" id="selection-{{ choice_problem.detail.id }}" value="d"
                                                name="selection-{{ choice_problem.detail.id }}">
-                                        D.{{ choice_problem.detail.d }}
+                                        D.{{ choice_problem.detail.d|safe }}
                                     </label>
                                 </div>
                             </div>
